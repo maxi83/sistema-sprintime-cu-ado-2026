@@ -1,0 +1,4 @@
+@model List<Event>
+@{ ViewData["Title"] = "Resultados"; }
+<section class="page-hero compact"><div class="shell"><span class="eyebrow">RESULTADOS OFICIALES</span><h1>La carrera termina.<br/><em>La historia queda.</em></h1><p>Buscá una competencia y encontrá tiempos, posiciones y clasificaciones.</p></div></section>
+<section class="section"><div class="shell result-event-list">@foreach(var race in Model){<a class="result-event-card" asp-action="Event" asp-route-slug="@race.Slug"><div><span>@race.StartDate.ToString("dd MMM yyyy").ToUpperInvariant()</span><h3>@race.Name</h3><p>@race.City · @race.Province</p></div><strong>Ver resultados →</strong></a>}@if(Model.Count==0){<div class="empty-state"><span>ST</span><h3>Todavía no hay resultados publicados.</h3><p>Cuando una carrera finalice, su clasificación aparecerá acá.</p></div>}</div></section>

@@ -1,0 +1,12 @@
+@if (TempData["Success"] is string success)
+{
+    <div class="toast toast-success" data-auto-dismiss><strong>Listo</strong><span>@success</span><button type="button" aria-label="Cerrar">×</button></div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="toast toast-error" data-auto-dismiss><strong>Atención</strong><span>@error</span><button type="button" aria-label="Cerrar">×</button></div>
+}
+@if (TempData["Info"] is string info)
+{
+    <div class="toast toast-info" data-auto-dismiss><strong>SprinTime</strong><span>@info</span><button type="button" aria-label="Cerrar">×</button></div>
+}

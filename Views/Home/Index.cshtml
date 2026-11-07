@@ -1,0 +1,86 @@
+@model HomeViewModel
+@{
+    ViewData["Title"] = "Carreras, timing y resultados";
+    var featured = Model.FeaturedEvent;
+}
+
+<section class="hero-home">
+    <div class="hero-noise"></div>
+    <div class="shell hero-grid">
+        <div class="hero-copy reveal">
+            <span class="eyebrow"><i></i> RACE · RIDE · RESULT · REPEAT</span>
+            <h1>Viví la carrera.<br/><em>Superá tu tiempo.</em></h1>
+            <p>Inscripción, acreditación, cronometraje y resultados en una plataforma pensada para corredores y organizadores.</p>
+            <div class="hero-actions">
+                @if (featured is not null)
+                {
+                    <a class="btn btn-primary btn-lg" asp-controller="Events" asp-action="Details" asp-route-slug="@featured.Slug">Ver próxima carrera <span>→</span></a>
+                }
+                <a class="btn btn-ghost btn-lg" asp-controller="Results" asp-action="Index">Explorar resultados</a>
+            </div>
+            <div class="hero-proof"><span><b>01</b> inscripción clara</span><span><b>02</b> Race Pass QR</span><span><b>03</b> resultados vivos</span></div>
+        </div>
+        <div class="hero-visual reveal delay-1">
+            <div class="race-orbit orbit-a"></div><div class="race-orbit orbit-b"></div>
+            <div class="hero-card">
+                <div class="hero-card-top"><span class="live-dot">LIVE READY</span><span>SPRINTIME</span></div>
+                @if (featured is not null)
+                {
+                    <div class="hero-date"><b>@featured.StartDate.ToString("dd")</b><span>@featured.StartDate.ToString("MMM").ToUpperInvariant()<small>@featured.StartDate.Year</small></span></div>
+                    <h2>@featured.Name</h2>
+                    <p>@featured.City · @featured.Province</p>
+                    <div class="hero-metrics">
+                        <span><small>DISTANCIAS</small><strong>@featured.Distances.Count</strong></span>
+                        <span><small>DESNIVEL</small><strong>+@featured.ElevationGainMeters m</strong></span>
+                        <span><small>ESTADO</small><strong>Abierta</strong></span>
+                    </div>
+                    <a asp-controller="Registration" asp-action="Create" asp-route-eventId="@featured.Id" class="mini-cta">INSCRIBIRME <span>↗</span></a>
+                }
+                else
+                {
+                    <div class="hero-date"><b>ST</b><span>RACE<small>TIMING</small></span></div><h2>La próxima carrera empieza acá.</h2><p>Publicá tu evento desde Control Center.</p>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-events">
+    <div class="shell">
+        <div class="section-head reveal"><div><span class="eyebrow">CALENDARIO</span><h2>Próximas carreras</h2></div><a class="text-link" asp-controller="Events" asp-action="Index">Ver calendario completo →</a></div>
+        <div class="race-grid">
+            @foreach (var race in Model.UpcomingEvents)
+            {
+                <article class="race-card reveal">
+                    <a asp-controller="Events" asp-action="Details" asp-route-slug="@race.Slug" class="race-image" style="--race-image:url('@(race.HeroImageUrl ?? "/images/hero-race.svg")')">
+                        <span class="race-status @(race.RegistrationCloseAt > DateTime.Now ? "open" : "closed")">@(race.RegistrationCloseAt > DateTime.Now ? "INSCRIPCIONES ABIERTAS" : "PRÓXIMO")</span>
+                        <span class="race-number">@race.StartDate.ToString("dd")<small>@race.StartDate.ToString("MMM").ToUpperInvariant()</small></span>
+                    </a>
+                    <div class="race-body">
+                        <span class="race-kicker">MTB · @race.City</span><h3><a asp-controller="Events" asp-action="Details" asp-route-slug="@race.Slug">@race.Name</a></h3>
+                        <div class="race-meta"><span>@string.Join(" / ", race.Distances.Select(d => $"{d.Kilometers:0}K"))</span><span>+@race.ElevationGainMeters m</span></div>
+                        <a class="race-link" asp-controller="Events" asp-action="Details" asp-route-slug="@race.Slug">Ver carrera <span>→</span></a>
+                    </div>
+                </article>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="platform-strip">
+    <div class="shell platform-grid">
+        <div class="platform-copy reveal"><span class="eyebrow">UNA SOLA PLATAFORMA</span><h2>La carrera no termina en la meta.</h2><p>Cada dato cargado una vez vuelve a generar valor: para la operación del organizador, el historial del ciclista y la experiencia del público.</p></div>
+        <div class="platform-flow reveal delay-1"><span><b>01</b>CREAR</span><i>→</i><span><b>02</b>INSCRIBIR</span><i>→</i><span><b>03</b>CORRER</span><i>→</i><span><b>04</b>RESULTADO</span></div>
+    </div>
+</section>
+
+<section class="section features-section">
+    <div class="shell"><div class="section-head"><div><span class="eyebrow">SPRINTIME V1</span><h2>Hecho para una carrera real.</h2></div></div>
+        <div class="feature-grid">
+            <article class="feature-card feature-orange reveal"><span>01</span><div class="feature-icon">⌁</div><h3>Live Timing</h3><p>Salida, checkpoints y meta desde el teléfono, con cola offline para seguir trabajando sin señal.</p></article>
+            <article class="feature-card reveal"><span>02</span><div class="feature-icon">▦</div><h3>Race Pass QR</h3><p>Acreditación rápida con identidad, categoría, pago, dorsal y estado del corredor.</p></article>
+            <article class="feature-card reveal"><span>03</span><div class="feature-icon">◎</div><h3>Seguimiento</h3><p>Estado del corredor por checkpoints y resultados listos para consultar y compartir.</p></article>
+            <article class="feature-card reveal"><span>04</span><div class="feature-icon">↗</div><h3>Ranking</h3><p>Temporada, categorías, puntos y progreso para convertir una carrera en comunidad.</p></article>
+        </div>
+    </div>
+</section>

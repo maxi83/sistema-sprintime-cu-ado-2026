@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1b2a30"/><stop offset="1" stop-color="#0d1215"/></linearGradient><radialGradient id="o"><stop stop-color="#ff6a00" stop-opacity=".55"/><stop offset="1" stop-color="#ff6a00" stop-opacity="0"/></radialGradient></defs>
+  <rect width="1600" height="900" fill="url(#g)"/><circle cx="1220" cy="240" r="360" fill="url(#o)" opacity=".35"/>
+  <path d="M0 665 L230 430 390 570 610 300 790 525 1020 250 1230 520 1430 380 1600 560V900H0Z" fill="#10191d"/>
+  <path d="M0 730 L260 560 470 690 735 460 970 650 1240 470 1600 690V900H0Z" fill="#172329"/>
+  <path d="M180 760 C430 610 520 755 750 620S1100 520 1410 675" fill="none" stroke="#ff6a00" stroke-width="7" stroke-linecap="round" opacity=".8"/>
+  <g fill="none" stroke="#f4f1eb" stroke-opacity=".08"><path d="M0 150H1600M0 300H1600M0 450H1600M0 600H1600M0 750H1600"/><path d="M200 0V900M400 0V900M600 0V900M800 0V900M1000 0V900M1200 0V900M1400 0V900"/></g>
+  <text x="95" y="160" fill="#fff" fill-opacity=".06" font-family="Arial" font-size="150" font-weight="900">SPRINTIME</text>
+</svg>

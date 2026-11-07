@@ -1,0 +1,12 @@
+{
+  "name": "SprinTime",
+  "short_name": "SprinTime",
+  "description": "Race timing · Cycling platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D1215",
+  "theme_color": "#0D1215",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

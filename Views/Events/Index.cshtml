@@ -1,0 +1,13 @@
+@model List<Event>
+@{ ViewData["Title"] = "Carreras"; }
+<section class="page-hero compact"><div class="shell"><span class="eyebrow">CALENDARIO SPRINTIME</span><h1>Elegí tu próxima <em>línea de largada.</em></h1><p>Información clara, recorrido, categorías, inscripción y resultados en un mismo lugar.</p></div></section>
+<section class="section"><div class="shell">
+    <div class="tabs"><a class="active" asp-action="Index">Próximas</a><a asp-action="Index" asp-route-state="past">Finalizadas</a></div>
+    <div class="race-grid race-grid-wide">
+    @foreach (var race in Model)
+    {
+        <article class="race-card"><a class="race-image" asp-action="Details" asp-route-slug="@race.Slug" style="--race-image:url('@(race.HeroImageUrl ?? "/images/hero-race.svg")')"><span class="race-status open">@race.StartDate.ToString("dd MMM · HH:mm").ToUpperInvariant()</span><span class="race-number">@race.StartDate.ToString("dd")<small>@race.StartDate.ToString("MMM").ToUpperInvariant()</small></span></a><div class="race-body"><span class="race-kicker">@race.City · @race.Province</span><h3><a asp-action="Details" asp-route-slug="@race.Slug">@race.Name</a></h3><div class="race-meta"><span>@string.Join(" / ", race.Distances.Select(x => x.Name))</span><span>+@race.ElevationGainMeters m</span></div><a class="race-link" asp-action="Details" asp-route-slug="@race.Slug">Abrir ficha <span>→</span></a></div></article>
+    }
+    </div>
+    @if (Model.Count == 0) { <div class="empty-state"><span>ST</span><h3>No hay carreras para mostrar.</h3><p>Cuando se publique el próximo evento va a aparecer acá.</p></div> }
+</div></section>

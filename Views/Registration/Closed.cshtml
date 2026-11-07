@@ -1,0 +1,3 @@
+@model Event
+@{ ViewData["Title"] = "Inscripción cerrada"; }
+<section class="state-page"><div class="state-card"><span class="state-icon">×</span><span class="eyebrow">CIERRE DE INSCRIPCIÓN</span><h1>La inscripción online ya cerró.</h1><p>El plazo para <strong>@Model.Name</strong> finalizó el @Model.RegistrationCloseAt.ToString("dd/MM/yyyy 'a las' HH:mm").</p>@if(Model.AllowOnsiteRegistration){<div class="notice"><b>Inscripción presencial habilitada</b><span>El organizador puede admitir altas el día del evento.</span></div>}<a class="btn btn-primary" asp-controller="Events" asp-action="Details" asp-route-slug="@Model.Slug">Volver a la carrera</a></div></section>

@@ -1,0 +1,14 @@
+bin/
+obj/
+.vs/
+.vscode/
+publish/
+*.user
+*.pfx
+*.p12
+*.key
+*.pem
+appsettings.Development.json
+appsettings.Production.json
+.env
+.env.*
