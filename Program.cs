@@ -34,7 +34,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// TEMPORAL: desactivar redirección HTTPS hasta emitir certificado SSL para sprintime.online.
+// app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
