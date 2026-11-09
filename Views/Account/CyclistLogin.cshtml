@@ -1,0 +1,6 @@
+@{ ViewData["Title"]="Ingresar como ciclista"; }
+<section class="auth-wrap"><div class="auth-panel"><h1>Espacio ciclista</h1><p>Ingresá con tu cuenta para ver tus carreras y anotarte en nuevos eventos.</p></div>
+<form asp-action="CyclistLogin" method="post" class="auth-card"><input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl"/><h2>Iniciar sesión</h2>@if(ViewBag.Error is string error){<div class="validation-summary">@error</div>}
+<label class="field"><span>Correo electrónico</span><input type="email" name="email" required autocomplete="username"/></label>
+<label class="field"><span>Contraseña</span><input type="password" name="password" required autocomplete="current-password"/></label>
+<button type="submit" class="btn btn-primary btn-lg btn-block">Entrar</button><p>¿No tenés cuenta? <a asp-action="Register" asp-route-returnUrl="@ViewBag.ReturnUrl">Registrarme</a></p></form></section>
