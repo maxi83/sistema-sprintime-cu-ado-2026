@@ -21,7 +21,8 @@ public class ResultsController(ApplicationDbContext db, lucho_sprintime.Services
     }
 
     public async Task<IActionResult> Index()
-        => View(await db.Events.AsNoTracking().Where(x => x.Status == EventStatus.Finished || db.Results.Any(r => r.Registration.EventId == x.Id)).OrderByDescending(x => x.StartDate).ToListAsync());
+        => View(await db.Events.AsNoTracking().Where(x => x.Slug != "desafio-mtb-potrero-2026" && x.Slug != "rally-bike-la-florida-2026")
+            .Where(x => x.Status == EventStatus.Finished && db.Results.Any(r => r.Registration.EventId == x.Id && r.Status == ResultStatus.Official)).OrderByDescending(x => x.StartDate).ToListAsync());
 
     [HttpGet("resultados/{slug}")]
     public async Task<IActionResult> Event(string slug, string? q = null, int? categoryId = null)
@@ -29,7 +30,7 @@ public class ResultsController(ApplicationDbContext db, lucho_sprintime.Services
         var race = await db.Events.AsNoTracking().Include(x => x.Distances).ThenInclude(x => x.Categories).FirstOrDefaultAsync(x => x.Slug == slug);
         if (race is null) return NotFound();
         IQueryable<Result> query = db.Results.AsNoTracking()
-            .Where(x => x.Registration.EventId == race.Id)
+            .Where(x => x.Registration.EventId == race.Id && x.Status == ResultStatus.Official)
             .Include(x => x.Registration).ThenInclude(x => x.Cyclist)
             .Include(x => x.Registration).ThenInclude(x => x.Category)
             .Include(x => x.Registration).ThenInclude(x => x.EventDistance);
