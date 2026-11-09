@@ -5,6 +5,7 @@ namespace lucho_sprintime.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
+    public DbSet<HistoricPodium> HistoricPodiums => Set<HistoricPodium>();
     public DbSet<SocialLinks> SocialLinks => Set<SocialLinks>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventDistance> EventDistances => Set<EventDistance>();
@@ -21,6 +22,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Event>().HasIndex(x => x.Slug).IsUnique();
+        modelBuilder.Entity<HistoricPodium>().HasIndex(x => new { x.EventId, x.Category, x.Place }).IsUnique();
         modelBuilder.Entity<Cyclist>().HasIndex(x => x.Dni).IsUnique();
         modelBuilder.Entity<Cyclist>().HasIndex(x => x.Email);
         modelBuilder.Entity<Registration>().HasIndex(x => new { x.EventId, x.CyclistId }).IsUnique();
