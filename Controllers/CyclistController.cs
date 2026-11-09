@@ -12,7 +12,7 @@ public class CyclistController(ApplicationDbContext db) : Controller
     public async Task<IActionResult> Dashboard()
     {
         if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var cyclistId)) return Challenge();
-        var cyclist = await db.Cyclists.AsNoTracking().Include(x => x.Bicycles).Include(x => x.Registrations).ThenInclude(x => x.Event).Include(x => x.Registrations).ThenInclude(x => x.Result).FirstOrDefaultAsync(x => x.Id == cyclistId);
+        var cyclist = await db.Cyclists.AsNoTracking().Include(x => x.Bicycles).Include(x => x.Registrations).ThenInclude(x => x.Event).Include(x => x.Registrations).ThenInclude(x => x.EventDistance).Include(x => x.Registrations).ThenInclude(x => x.Result).FirstOrDefaultAsync(x => x.Id == cyclistId);
         return cyclist is null ? NotFound() : View(cyclist);
     }
 }
