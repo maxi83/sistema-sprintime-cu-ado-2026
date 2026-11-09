@@ -13,11 +13,17 @@ public class ResultsController(ApplicationDbContext db, lucho_sprintime.Services
     {
         var race = await db.Events.AsNoTracking()
             .Where(x => x.Slug != "desafio-mtb-potrero-2026" && x.Slug != "rally-bike-la-florida-2026")
-            .Where(x => x.Status == EventStatus.Finished && db.Results.Any(r =>
-                r.Registration.EventId == x.Id && r.Status == ResultStatus.Official))
+            .Where(x => (x.Status == EventStatus.Finished || x.StartDate < DateTime.Now)
+                && (db.HistoricPodiums.Any(p => p.EventId == x.Id) ||
+                    db.Results.Any(r => r.Registration.EventId == x.Id && r.Status == ResultStatus.Official)))
             .OrderByDescending(x => x.StartDate)
             .FirstOrDefaultAsync();
-        return race is null ? RedirectToAction(nameof(Index)) : RedirectToAction(nameof(Event), new { slug = race.Slug });
+        if (race is null) return RedirectToAction(nameof(Index));
+        var hasOfficialResults = await db.Results.AnyAsync(r =>
+            r.Registration.EventId == race.Id && r.Status == ResultStatus.Official);
+        return hasOfficialResults
+            ? RedirectToAction(nameof(Event), new { slug = race.Slug })
+            : RedirectToAction("Details", "Events", new { slug = race.Slug });
     }
 
     public async Task<IActionResult> Index()
