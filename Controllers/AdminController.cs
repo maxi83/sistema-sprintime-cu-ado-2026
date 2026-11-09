@@ -108,13 +108,15 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
     {
         if (!id.HasValue)
             return View(new EventEditViewModel { StartDate = DateTime.Today.AddDays(30).AddHours(9), RegistrationOpenAt = DateTime.Today, RegistrationCloseAt = DateTime.Today.AddDays(28).AddHours(22) });
-        var race = await db.Events.Include(x => x.Distances).ThenInclude(x => x.Categories).FirstOrDefaultAsync(x => x.Id == id.Value);
+        var race = await db.Events.Include(x => x.HistoricPodiums).Include(x => x.Distances).ThenInclude(x => x.Categories).FirstOrDefaultAsync(x => x.Id == id.Value);
         if (race is null) return NotFound();
         return View(new EventEditViewModel
         {
             Id = race.Id, Name = race.Name, Slug = race.Slug, City = race.City, Province = race.Province, Venue = race.Venue,
             StartDate = race.StartDate, RegistrationOpenAt = race.RegistrationOpenAt, RegistrationCloseAt = race.RegistrationCloseAt,
             Description = race.Description, HeroImageUrl = race.HeroImageUrl, RegulationUrl = race.RegulationUrl, GpxUrl = race.GpxUrl,
+            PhotoAlbumUrl = race.PhotoAlbumUrl, GalleryImageUrls = race.GalleryImageUrls,
+            PodiumEntries = string.Join(Environment.NewLine, race.HistoricPodiums.OrderBy(x => x.Category).ThenBy(x => x.Place).Select(x => $"{x.Category} | {x.Place} | {x.CyclistName}")),
             ElevationGainMeters = race.ElevationGainMeters, Status = race.Status, ShowPublicParticipants = race.ShowPublicParticipants,
             AllowOnsiteRegistration = race.AllowOnsiteRegistration,
             Distances = race.Distances.Select(d => new EventEditViewModel.DistanceInput { Id = d.Id, Name = d.Name, Kilometers = d.Kilometers, Price = d.Price, MaxParticipants = d.MaxParticipants, Categories = string.Join(", ", d.Categories.Select(c => c.Name)) }).ToList()
@@ -128,12 +130,36 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
         if (await db.Events.AnyAsync(x => x.Slug == model.Slug && x.Id != model.Id)) ModelState.AddModelError(nameof(model.Slug), "Ya existe una carrera con ese slug.");
         model.Distances = model.Distances.Where(x => !string.IsNullOrWhiteSpace(x.Name)).ToList();
         if (model.Distances.Count == 0) ModelState.AddModelError(nameof(model.Distances), "Agregá al menos una distancia.");
+        var photos = (model.GalleryImageUrls ?? "").Split(['\r','\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (photos.Length > 6) ModelState.AddModelError(nameof(model.GalleryImageUrls), "Se permiten hasta 6 imágenes.");
+        foreach (var photo in photos)
+            if (!Uri.TryCreate(photo, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps ||
+                photo.Length > 500 || !new[]{".jpg",".jpeg",".png",".webp"}.Any(ext => uri.AbsolutePath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
+                ModelState.AddModelError(nameof(model.GalleryImageUrls), "Cada foto debe ser una URL HTTPS pública terminada en .jpg, .jpeg, .png o .webp.");
+        if (!string.IsNullOrWhiteSpace(model.PhotoAlbumUrl) &&
+            (!Uri.TryCreate(model.PhotoAlbumUrl, UriKind.Absolute, out var album) ||
+             album.Scheme != Uri.UriSchemeHttps || !(album.Host == "drive.google.com" || album.Host == "docs.google.com")))
+            ModelState.AddModelError(nameof(model.PhotoAlbumUrl), "Usá un enlace HTTPS de Google Drive.");
+        var podiums = new List<HistoricPodium>();
+        foreach (var line in (model.PodiumEntries ?? "").Split(['\r','\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var parts = line.Split('|', 3, StringSplitOptions.TrimEntries);
+            if (parts.Length != 3 || !int.TryParse(parts[1], out var place) || place < 1 || place > 3 ||
+                parts[0].Length is < 1 or > 120 || parts[2].Length is < 1 or > 160)
+            {
+                ModelState.AddModelError(nameof(model.PodiumEntries), "Usá una línea por puesto: Categoría | 1, 2 o 3 | Nombre.");
+                continue;
+            }
+            podiums.Add(new HistoricPodium { Category = parts[0], Place = place, CyclistName = parts[2] });
+        }
+        if (podiums.GroupBy(x => new { x.Category, x.Place }).Any(x => x.Count() > 1))
+            ModelState.AddModelError(nameof(model.PodiumEntries), "No repitas posiciones de una misma categoría.");
         if (!ModelState.IsValid) return View(model);
 
         Event race;
         if (model.Id.HasValue)
         {
-            race = await db.Events.Include(x => x.Distances).ThenInclude(x => x.Categories).FirstAsync(x => x.Id == model.Id.Value);
+            race = await db.Events.Include(x => x.HistoricPodiums).Include(x => x.Distances).ThenInclude(x => x.Categories).FirstAsync(x => x.Id == model.Id.Value);
         }
         else
         {
@@ -143,6 +169,10 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
         race.StartDate = model.StartDate; race.RegistrationOpenAt = model.RegistrationOpenAt; race.RegistrationCloseAt = model.RegistrationCloseAt; race.Description = model.Description.Trim();
         race.HeroImageUrl = model.HeroImageUrl; race.RegulationUrl = model.RegulationUrl; race.GpxUrl = model.GpxUrl; race.ElevationGainMeters = model.ElevationGainMeters; race.Status = model.Status;
         race.ShowPublicParticipants = model.ShowPublicParticipants; race.AllowOnsiteRegistration = model.AllowOnsiteRegistration;
+        race.PhotoAlbumUrl = string.IsNullOrWhiteSpace(model.PhotoAlbumUrl) ? null : model.PhotoAlbumUrl.Trim();
+        race.GalleryImageUrls = photos.Length == 0 ? null : string.Join("\n", photos);
+        if (model.Id.HasValue) db.HistoricPodiums.RemoveRange(race.HistoricPodiums);
+        foreach (var entry in podiums) race.HistoricPodiums.Add(entry);
 
         foreach (var input in model.Distances)
         {
