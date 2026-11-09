@@ -5,5 +5,7 @@ namespace lucho_sprintime.Controllers;
 
 public class RankingController(IRankingService rankingService) : Controller
 {
-    public async Task<IActionResult> Index() => View(await rankingService.BuildAsync());
+    // El ranking por campeonato se habilitará cuando el organizador configure
+    // las carreras puntuables y el reglamento completo de puntos.
+    public IActionResult Index() => NotFound();
 }
