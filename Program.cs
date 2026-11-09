@@ -76,6 +76,20 @@ using (var scope = app.Services.CreateScope())
             IF COL_LENGTH('dbo.Cyclists', 'MedicalConsent') IS NULL ALTER TABLE dbo.Cyclists ADD MedicalConsent bit NOT NULL CONSTRAINT DF_Cyclists_MedicalConsent DEFAULT 0;
         END
         """);
+    await db.Database.ExecuteSqlRawAsync("""
+        IF OBJECT_ID(N'dbo.SocialLinks', N'U') IS NULL
+        BEGIN
+            CREATE TABLE dbo.SocialLinks (
+                Id int NOT NULL PRIMARY KEY,
+                FacebookUrl nvarchar(max) NULL,
+                InstagramUrl nvarchar(max) NULL,
+                WhatsappGroupUrl nvarchar(max) NULL,
+                FacebookEnabled bit NOT NULL,
+                InstagramEnabled bit NOT NULL,
+                WhatsappGroupEnabled bit NOT NULL
+            );
+        END
+        """);
     await SeedData.InitializeAsync(db);
 }
 
