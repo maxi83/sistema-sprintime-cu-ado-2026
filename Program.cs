@@ -18,6 +18,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.Name = "SprinTime.Auth";
         options.ExpireTimeSpan = TimeSpan.FromHours(12);
         options.SlidingExpiration = true;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Events.OnRedirectToLogin = context =>
         {
             var target = context.Request.Path.StartsWithSegments("/Registration") ||
