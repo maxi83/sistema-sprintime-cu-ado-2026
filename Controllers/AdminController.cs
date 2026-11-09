@@ -16,6 +16,7 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
     {
         var settings = await db.SocialLinks.AsNoTracking().FirstOrDefaultAsync(x => x.Id == 1);
         return View(new SocialLinksInput {
+            RankingEnabled = settings?.RankingEnabled ?? false,
             FacebookUrl = settings?.FacebookUrl, InstagramUrl = settings?.InstagramUrl,
             WhatsappGroupUrl = settings?.WhatsappGroupUrl, FacebookEnabled = settings?.FacebookEnabled ?? false,
             InstagramEnabled = settings?.InstagramEnabled ?? false, WhatsappGroupEnabled = settings?.WhatsappGroupEnabled ?? false
@@ -38,6 +39,7 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
         if (!ModelState.IsValid) return View(input);
         var settings = await db.SocialLinks.FirstOrDefaultAsync(x => x.Id == 1);
         if (settings is null) { settings = new SocialLinks { Id = 1 }; db.SocialLinks.Add(settings); }
+        settings.RankingEnabled = input.RankingEnabled;
         settings.FacebookUrl = input.FacebookUrl?.Trim();
         settings.InstagramUrl = input.InstagramUrl?.Trim();
         settings.WhatsappGroupUrl = input.WhatsappGroupUrl?.Trim();
