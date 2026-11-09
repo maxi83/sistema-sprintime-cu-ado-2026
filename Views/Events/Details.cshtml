@@ -23,11 +23,12 @@
             {
                 <div class="form-card"><h3>@category.Key</h3>
                 @foreach (var winner in category.OrderBy(x => x.Place))
-                { <p><strong>@winner.Place.º puesto</strong> — @winner.CyclistName</p> }
+                { <p><strong>@(winner.Place).º puesto</strong> — @winner.CyclistName</p> }
                 </div>
             }
         }
-        <a class="btn btn-outline" asp-controller="Results" asp-action="Event" asp-route-slug="@Model.Slug">Ver clasificación oficial</a>
+        @if (ViewBag.HasOfficialResults == true)
+        { <a class="btn btn-outline" asp-controller="Results" asp-action="Event" asp-route-slug="@Model.Slug">Ver clasificación oficial</a> }
         @if (images.Count > 0)
         {
             <h3>Galería de la carrera</h3>
