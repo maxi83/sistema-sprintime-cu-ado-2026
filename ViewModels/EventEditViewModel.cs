@@ -18,6 +18,12 @@ public class EventEditViewModel
     [MaxLength(500)] public string? HeroImageUrl { get; set; }
     [MaxLength(500)] public string? RegulationUrl { get; set; }
     [MaxLength(500)] public string? GpxUrl { get; set; }
+    [MaxLength(500), Display(Name = "Enlace al álbum de Google Drive")]
+    public string? PhotoAlbumUrl { get; set; }
+    [MaxLength(4000), Display(Name = "Fotos de la carrera")]
+    public string? GalleryImageUrls { get; set; }
+    [MaxLength(6000), Display(Name = "Podios por categoría")]
+    public string? PodiumEntries { get; set; }
     public int ElevationGainMeters { get; set; }
     public EventStatus Status { get; set; } = EventStatus.Draft;
     public bool ShowPublicParticipants { get; set; } = true;
