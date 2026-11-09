@@ -60,9 +60,9 @@
                 <a asp-controller="Results" asp-action="Index">Resultados</a>
 
                 <a asp-controller="Account" asp-action="Login">Administración</a>
-                @if (social?.FacebookEnabled == true && !string.IsNullOrWhiteSpace(social.FacebookUrl)) { <a href="@social.FacebookUrl" target="_blank" rel="noopener noreferrer" aria-label="Facebook">Facebook</a> }
-                @if (social?.InstagramEnabled == true && !string.IsNullOrWhiteSpace(social.InstagramUrl)) { <a href="@social.InstagramUrl" target="_blank" rel="noopener noreferrer" aria-label="Instagram">Instagram</a> }
-                @if (social?.WhatsappGroupEnabled == true && !string.IsNullOrWhiteSpace(social.WhatsappGroupUrl)) { <a href="@social.WhatsappGroupUrl" target="_blank" rel="noopener noreferrer" aria-label="Grupo de WhatsApp">Grupo de WhatsApp</a> }
+                @if (social?.FacebookEnabled == true && !string.IsNullOrWhiteSpace(social.FacebookUrl)) { <a href="@social.FacebookUrl" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><span class="social-mark social-fb" aria-hidden="true">f</span> Facebook</a> }
+                @if (social?.InstagramEnabled == true && !string.IsNullOrWhiteSpace(social.InstagramUrl)) { <a href="@social.InstagramUrl" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><span class="social-mark social-ig" aria-hidden="true">◎</span> Instagram</a> }
+                @if (social?.WhatsappGroupEnabled == true && !string.IsNullOrWhiteSpace(social.WhatsappGroupUrl)) { <a href="@social.WhatsappGroupUrl" target="_blank" rel="noopener noreferrer" aria-label="Grupo de WhatsApp"><span class="social-mark social-wa" aria-hidden="true">WA</span> Grupo de WhatsApp</a> }
             </div>
             <div class="footer-credit"><span>Diseño y desarrollo</span><a href="https://neomaxweb.online" target="_blank" rel="noreferrer">NeoMax ↗</a><small>© @DateTime.Now.Year SprinTime</small></div>
         </div>
