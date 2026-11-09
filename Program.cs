@@ -90,6 +90,26 @@ using (var scope = app.Services.CreateScope())
             );
         END
         """);
+    await db.Database.ExecuteSqlRawAsync("""
+        IF OBJECT_ID(N'dbo.Events', N'U') IS NOT NULL
+        BEGIN
+            IF COL_LENGTH('dbo.Events', 'PhotoAlbumUrl') IS NULL ALTER TABLE dbo.Events ADD PhotoAlbumUrl nvarchar(500) NULL;
+            IF COL_LENGTH('dbo.Events', 'GalleryImageUrls') IS NULL ALTER TABLE dbo.Events ADD GalleryImageUrls nvarchar(4000) NULL;
+        END
+        IF OBJECT_ID(N'dbo.HistoricPodiums', N'U') IS NULL
+        BEGIN
+            CREATE TABLE dbo.HistoricPodiums (
+                Id int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                EventId int NOT NULL REFERENCES dbo.Events(Id),
+                Category nvarchar(120) NOT NULL,
+                Place int NOT NULL,
+                CyclistName nvarchar(160) NOT NULL,
+                CONSTRAINT CK_HistoricPodiums_Place CHECK (Place BETWEEN 1 AND 3)
+            );
+            CREATE UNIQUE INDEX IX_HistoricPodiums_EventId_Category_Place
+            ON dbo.HistoricPodiums(EventId, Category, Place);
+        END
+        """);
     await SeedData.InitializeAsync(db);
 }
 
