@@ -86,11 +86,15 @@ using (var scope = app.Services.CreateScope())
                 WhatsappGroupUrl nvarchar(max) NULL,
                 FacebookEnabled bit NOT NULL,
                 InstagramEnabled bit NOT NULL,
-                WhatsappGroupEnabled bit NOT NULL
+                WhatsappGroupEnabled bit NOT NULL,
+                RankingEnabled bit NOT NULL DEFAULT 0
             );
         END
         """);
     await db.Database.ExecuteSqlRawAsync("""
+        IF OBJECT_ID(N'dbo.SocialLinks', N'U') IS NOT NULL
+            AND COL_LENGTH('dbo.SocialLinks', 'RankingEnabled') IS NULL
+            ALTER TABLE dbo.SocialLinks ADD RankingEnabled bit NOT NULL CONSTRAINT DF_SocialLinks_RankingEnabled DEFAULT 0;
         IF OBJECT_ID(N'dbo.Events', N'U') IS NOT NULL
         BEGIN
             IF COL_LENGTH('dbo.Events', 'PhotoAlbumUrl') IS NULL ALTER TABLE dbo.Events ADD PhotoAlbumUrl nvarchar(500) NULL;
