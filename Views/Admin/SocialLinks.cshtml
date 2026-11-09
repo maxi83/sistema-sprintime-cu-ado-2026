@@ -4,5 +4,7 @@
 <div class="form-card"><label class="field"><span>Facebook — URL</span><input asp-for="FacebookUrl" type="url" placeholder="https://www.facebook.com/..."/></label><label class="check-field"><input asp-for="FacebookEnabled"/> Mostrar Facebook</label></div>
 <div class="form-card"><label class="field"><span>Instagram — URL</span><input asp-for="InstagramUrl" type="url" placeholder="https://www.instagram.com/..."/></label><label class="check-field"><input asp-for="InstagramEnabled"/> Mostrar Instagram</label></div>
 <div class="form-card"><label class="field"><span>Grupo de WhatsApp — invitación</span><input asp-for="WhatsappGroupUrl" type="url" placeholder="https://chat.whatsapp.com/..."/></label><label class="check-field"><input asp-for="WhatsappGroupEnabled"/> Mostrar acceso al grupo de WhatsApp</label></div>
-<button type="submit" class="btn btn-primary btn-lg">Guardar enlaces</button></form></div></section>
+<div class="form-card"><h2>Ranking de campeonatos</h2><label class="check-field"><input asp-for="RankingEnabled"/> Mostrar ranking en la web</label>
+<p class="form-note">Dejalo apagado hasta cargar resultados reales y definir las carreras puntuables del campeonato.</p></div>
+<button type="submit" class="btn btn-primary btn-lg">Guardar configuración</button></form></div></section>
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }
