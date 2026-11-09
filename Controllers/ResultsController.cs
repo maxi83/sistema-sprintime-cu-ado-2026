@@ -8,6 +8,18 @@ namespace lucho_sprintime.Controllers;
 
 public class ResultsController(ApplicationDbContext db, lucho_sprintime.Services.IExportService exportService) : Controller
 {
+    [HttpGet]
+    public async Task<IActionResult> Latest()
+    {
+        var race = await db.Events.AsNoTracking()
+            .Where(x => x.Slug != "desafio-mtb-potrero-2026" && x.Slug != "rally-bike-la-florida-2026")
+            .Where(x => x.Status == EventStatus.Finished && db.Results.Any(r =>
+                r.Registration.EventId == x.Id && r.Status == ResultStatus.Official))
+            .OrderByDescending(x => x.StartDate)
+            .FirstOrDefaultAsync();
+        return race is null ? RedirectToAction(nameof(Index)) : RedirectToAction(nameof(Event), new { slug = race.Slug });
+    }
+
     public async Task<IActionResult> Index()
         => View(await db.Events.AsNoTracking().Where(x => x.Status == EventStatus.Finished || db.Results.Any(r => r.Registration.EventId == x.Id)).OrderByDescending(x => x.StartDate).ToListAsync());
 
