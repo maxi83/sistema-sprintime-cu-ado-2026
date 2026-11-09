@@ -58,6 +58,8 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+try
+{
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -115,6 +117,26 @@ using (var scope = app.Services.CreateScope())
         END
         """);
     await SeedData.InitializeAsync(db);
+}
+
+}
+catch (Exception startupError)
+{
+    // Persistent diagnostics for IIS/SmarterASP startup failures.
+    // Log lives outside wwwroot so it cannot be downloaded publicly.
+    try
+    {
+        var logsDirectory = Path.Combine(app.Environment.ContentRootPath, "logs");
+        Directory.CreateDirectory(logsDirectory);
+        var report = $"[{DateTimeOffset.UtcNow:O}] Sprintime startup failure:{Environment.NewLine}{startupError}{Environment.NewLine}{Environment.NewLine}";
+        await File.AppendAllTextAsync(Path.Combine(logsDirectory, "sprintime-startup-error.txt"), report);
+    }
+    catch (Exception writeError)
+    {
+        Console.Error.WriteLine($"Could not write startup report: {writeError.Message}");
+    }
+    Console.Error.WriteLine(startupError);
+    throw;
 }
 
 app.Run();
