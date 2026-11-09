@@ -5,6 +5,7 @@ namespace lucho_sprintime.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
+    public DbSet<SocialLinks> SocialLinks => Set<SocialLinks>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventDistance> EventDistances => Set<EventDistance>();
     public DbSet<Category> Categories => Set<Category>();
