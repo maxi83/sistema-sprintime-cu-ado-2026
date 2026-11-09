@@ -173,8 +173,16 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
         race.ShowPublicParticipants = model.ShowPublicParticipants; race.AllowOnsiteRegistration = model.AllowOnsiteRegistration;
         race.PhotoAlbumUrl = string.IsNullOrWhiteSpace(model.PhotoAlbumUrl) ? null : model.PhotoAlbumUrl.Trim();
         race.GalleryImageUrls = photos.Length == 0 ? null : string.Join("\n", photos);
-        if (model.Id.HasValue) db.HistoricPodiums.RemoveRange(race.HistoricPodiums);
-        foreach (var entry in podiums) race.HistoricPodiums.Add(entry);
+        foreach (var old in race.HistoricPodiums.ToList())
+        {
+            var match = podiums.FirstOrDefault(x =>
+                x.Category.Equals(old.Category, StringComparison.OrdinalIgnoreCase) && x.Place == old.Place);
+            if (match is null) db.HistoricPodiums.Remove(old);
+            else old.CyclistName = match.CyclistName;
+        }
+        foreach (var entry in podiums.Where(x => !race.HistoricPodiums.Any(old =>
+            old.Category.Equals(x.Category, StringComparison.OrdinalIgnoreCase) && old.Place == x.Place)))
+            race.HistoricPodiums.Add(entry);
 
         foreach (var input in model.Distances)
         {
