@@ -22,7 +22,7 @@
                 <a asp-controller="Results" asp-action="Index">Resultados</a>
                 <a asp-controller="Ranking" asp-action="Index">Ranking</a>
                 <a asp-controller="Cyclist" asp-action="Dashboard">Espacio ciclista</a>
-                @if (User.Identity?.IsAuthenticated == true)
+                @if (User.IsInRole("Administrator") || User.IsInRole("Organizer"))
                 {
                     <a class="nav-admin" asp-controller="Admin" asp-action="Dashboard">Control Center</a>
                 }
