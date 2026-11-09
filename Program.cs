@@ -18,6 +18,14 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.Name = "SprinTime.Auth";
         options.ExpireTimeSpan = TimeSpan.FromHours(12);
         options.SlidingExpiration = true;
+        options.Events.OnRedirectToLogin = context =>
+        {
+            var target = context.Request.Path.StartsWithSegments("/Registration") ||
+                context.Request.Path.StartsWithSegments("/Cyclist")
+                ? "/Account/CyclistLogin" : "/Account/Login";
+            context.Response.Redirect(target + "?returnUrl=" + Uri.EscapeDataString(context.Request.Path + context.Request.QueryString));
+            return Task.CompletedTask;
+        };
     });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IPasswordHasher<lucho_sprintime.Models.Cyclist>, PasswordHasher<lucho_sprintime.Models.Cyclist>>();
