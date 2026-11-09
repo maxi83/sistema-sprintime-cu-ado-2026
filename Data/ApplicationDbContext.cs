@@ -21,6 +21,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // This singleton configuration table uses a fixed key (Id = 1), not SQL IDENTITY.
+        modelBuilder.Entity<SocialLinks>().Property(x => x.Id).ValueGeneratedNever();
         modelBuilder.Entity<Event>().HasIndex(x => x.Slug).IsUnique();
         modelBuilder.Entity<HistoricPodium>().HasIndex(x => new { x.EventId, x.Category, x.Place }).IsUnique();
         modelBuilder.Entity<Cyclist>().HasIndex(x => x.Dni).IsUnique();
