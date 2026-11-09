@@ -21,7 +21,12 @@
                 <a asp-controller="Events" asp-action="Index">Carreras</a>
                 <a asp-controller="Results" asp-action="Index">Resultados</a>
                 <a asp-controller="Ranking" asp-action="Index">Ranking</a>
-                <a asp-controller="Cyclist" asp-action="Dashboard">Espacio ciclista</a>
+                @if (User.IsInRole("Cyclist")) { <a asp-controller="Cyclist" asp-action="Dashboard">Mi perfil</a> }
+                else { <a asp-controller="Account" asp-action="CyclistLogin">Espacio ciclista</a> }
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline"><button type="submit" class="btn btn-ghost">Salir</button></form>
+                }
                 @if (User.IsInRole("Administrator") || User.IsInRole("Organizer"))
                 {
                     <a class="nav-admin" asp-controller="Admin" asp-action="Dashboard">Control Center</a>
