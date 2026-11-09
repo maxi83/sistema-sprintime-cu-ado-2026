@@ -8,3 +8,35 @@
 </article>
 <aside class="detail-aside"><div class="info-card sticky-card"><span class="eyebrow">INFORMACIÓN ACCIONABLE</span><ul class="info-list"><li><span>◷</span><div><small>FECHA Y HORA</small><b>@Model.StartDate.ToString("dddd dd 'de' MMMM · HH:mm")</b></div></li><li><span>⌖</span><div><small>LUGAR</small><b>@Model.Venue, @Model.City</b></div></li><li><span>◎</span><div><small>CIERRE DE INSCRIPCIÓN</small><b>@Model.RegistrationCloseAt.ToString("dd/MM · HH:mm")</b></div></li><li><span>✓</span><div><small>ACREDITACIÓN</small><b>Race Pass QR + control de pago</b></div></li></ul>@if(open){<a class="btn btn-primary btn-block" asp-controller="Registration" asp-action="Create" asp-route-eventId="@Model.Id">Inscribirme ahora</a>}@if(!string.IsNullOrWhiteSpace(Model.RegulationUrl)){<a class="btn btn-outline btn-block" href="@Model.RegulationUrl">Ver reglamento</a>}<a class="btn btn-outline btn-block" asp-controller="Follow" asp-action="Index" asp-route-slug="@Model.Slug">Seguir corredor</a></div></aside></div></section>
 @if(Model.Sponsors.Count>0){<section class="sponsor-strip"><div class="shell"><span>ACOMPAÑAN ESTA CARRERA</span><div>@foreach(var sponsor in Model.Sponsors.OrderBy(x=>x.Order)){<b>@sponsor.Name</b>}</div></div></section>}
+
+@{
+    var isHistory = Model.Status == EventStatus.Finished || Model.StartDate < DateTime.Now;
+    var images = (Model.GalleryImageUrls ?? "").Split(['\r','\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Take(6).ToList();
+}
+@if (isHistory)
+{
+    <section class="section history-detail"><div class="shell">
+        <span class="eyebrow">HISTORIAL DE CARRERAS</span><h2>Podios, resultados y recuerdos</h2>
+        @if (Model.HistoricPodiums.Count > 0)
+        {
+            @foreach (var category in Model.HistoricPodiums.GroupBy(x => x.Category).OrderBy(x => x.Key))
+            {
+                <div class="form-card"><h3>@category.Key</h3>
+                @foreach (var winner in category.OrderBy(x => x.Place))
+                { <p><strong>@winner.Place.º puesto</strong> — @winner.CyclistName</p> }
+                </div>
+            }
+        }
+        <a class="btn btn-outline" asp-controller="Results" asp-action="Event" asp-route-slug="@Model.Slug">Ver clasificación oficial</a>
+        @if (images.Count > 0)
+        {
+            <h3>Galería de la carrera</h3>
+            <div class="race-grid history-gallery">
+            @foreach (var url in images)
+            { <div class="history-image"><img src="@url" alt="Fotografía de @Model.Name" loading="lazy" referrerpolicy="no-referrer" /></div> }
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.PhotoAlbumUrl))
+        { <p><a class="btn btn-outline" href="@Model.PhotoAlbumUrl" target="_blank" rel="noopener noreferrer">Ver álbum de fotos en Google Drive ↗</a></p> }
+    </div></section>
+}
