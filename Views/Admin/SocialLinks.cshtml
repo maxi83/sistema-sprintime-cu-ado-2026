@@ -1,0 +1,8 @@
+@model lucho_sprintime.ViewModels.SocialLinksInput
+@{ ViewData["Title"] = "Redes sociales"; ViewData["BodyClass"] = "admin-page"; }
+<section class="section form-section"><div class="shell narrow"><a asp-action="Dashboard">← Panel de control</a><h1>Redes sociales y grupo de WhatsApp</h1><p>Activá cada enlace solamente cuando esté listo para compartir.</p><form asp-action="SocialLinks" method="post" class="premium-form"><div asp-validation-summary="All" class="validation-summary"></div>
+<div class="form-card"><label class="field"><span>Facebook — URL</span><input asp-for="FacebookUrl" type="url" placeholder="https://www.facebook.com/..."/></label><label class="check-field"><input asp-for="FacebookEnabled"/> Mostrar Facebook</label></div>
+<div class="form-card"><label class="field"><span>Instagram — URL</span><input asp-for="InstagramUrl" type="url" placeholder="https://www.instagram.com/..."/></label><label class="check-field"><input asp-for="InstagramEnabled"/> Mostrar Instagram</label></div>
+<div class="form-card"><label class="field"><span>Grupo de WhatsApp — invitación</span><input asp-for="WhatsappGroupUrl" type="url" placeholder="https://chat.whatsapp.com/..."/></label><label class="check-field"><input asp-for="WhatsappGroupEnabled"/> Mostrar acceso al grupo de WhatsApp</label></div>
+<button type="submit" class="btn btn-primary btn-lg">Guardar enlaces</button></form></div></section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
