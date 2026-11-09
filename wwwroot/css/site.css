@@ -59,3 +59,9 @@
 .social-fb{background:#1877f2;font-size:1.1rem}
 .social-ig{background:#b63490;font-size:1.1rem}
 .social-wa{background:#128c7e;font-size:.6rem}
+
+/* Historial de carreras */
+.history-gallery{margin:1.5rem 0}
+.history-image{aspect-ratio:3/2;overflow:hidden;border-radius:14px;background:#192025}
+.history-image img{width:100%;height:100%;object-fit:cover}
+.history-detail .form-card{margin:1rem 0}
