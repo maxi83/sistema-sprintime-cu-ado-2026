@@ -11,6 +11,44 @@ namespace lucho_sprintime.Controllers;
 [Authorize(Roles = "Administrator,Organizer")]
 public class AdminController(ApplicationDbContext db, IExportService exportService) : Controller
 {
+    [HttpGet]
+    public async Task<IActionResult> SocialLinks()
+    {
+        var settings = await db.SocialLinks.AsNoTracking().FirstOrDefaultAsync(x => x.Id == 1);
+        return View(new SocialLinksInput {
+            FacebookUrl = settings?.FacebookUrl, InstagramUrl = settings?.InstagramUrl,
+            WhatsappGroupUrl = settings?.WhatsappGroupUrl, FacebookEnabled = settings?.FacebookEnabled ?? false,
+            InstagramEnabled = settings?.InstagramEnabled ?? false, WhatsappGroupEnabled = settings?.WhatsappGroupEnabled ?? false
+        });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> SocialLinks(SocialLinksInput input)
+    {
+        static bool ValidLink(string? url, string host) =>
+            string.IsNullOrWhiteSpace(url) ||
+            (Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps &&
+             (uri.Host == host || uri.Host.EndsWith("." + host, StringComparison.OrdinalIgnoreCase)));
+        if (!ValidLink(input.FacebookUrl, "facebook.com") && !ValidLink(input.FacebookUrl, "fb.com"))
+            ModelState.AddModelError(nameof(input.FacebookUrl), "Usá un enlace HTTPS de Facebook.");
+        if (!ValidLink(input.InstagramUrl, "instagram.com"))
+            ModelState.AddModelError(nameof(input.InstagramUrl), "Usá un enlace HTTPS de Instagram.");
+        if (!ValidLink(input.WhatsappGroupUrl, "chat.whatsapp.com"))
+            ModelState.AddModelError(nameof(input.WhatsappGroupUrl), "Usá un enlace de invitación HTTPS de WhatsApp.");
+        if (!ModelState.IsValid) return View(input);
+        var settings = await db.SocialLinks.FirstOrDefaultAsync(x => x.Id == 1);
+        if (settings is null) { settings = new SocialLinks { Id = 1 }; db.SocialLinks.Add(settings); }
+        settings.FacebookUrl = input.FacebookUrl?.Trim();
+        settings.InstagramUrl = input.InstagramUrl?.Trim();
+        settings.WhatsappGroupUrl = input.WhatsappGroupUrl?.Trim();
+        settings.FacebookEnabled = input.FacebookEnabled && !string.IsNullOrWhiteSpace(settings.FacebookUrl);
+        settings.InstagramEnabled = input.InstagramEnabled && !string.IsNullOrWhiteSpace(settings.InstagramUrl);
+        settings.WhatsappGroupEnabled = input.WhatsappGroupEnabled && !string.IsNullOrWhiteSpace(settings.WhatsappGroupUrl);
+        await db.SaveChangesAsync();
+        TempData["Success"] = "Enlaces actualizados.";
+        return RedirectToAction(nameof(SocialLinks));
+    }
+
     public async Task<IActionResult> Dashboard(int? eventId = null)
     {
         var race = eventId.HasValue
