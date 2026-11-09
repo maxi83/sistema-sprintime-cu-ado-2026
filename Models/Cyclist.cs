@@ -15,6 +15,14 @@ public class Cyclist
     [MaxLength(120)] public string Team { get; set; } = "";
     [MaxLength(160)] public string EmergencyContact { get; set; } = "";
     [MaxLength(40)] public string EmergencyPhone { get; set; } = "";
+    [MaxLength(500)] public string? PasswordHash { get; set; }
+    [MaxLength(10)] public string? BloodType { get; set; }
+    public bool HasInsurance { get; set; }
+    [MaxLength(120)] public string? InsuranceNumber { get; set; }
+    [MaxLength(40)] public string? SecondEmergencyPhone { get; set; }
+    [MaxLength(1000)] public string? MedicalConditions { get; set; }
+    [MaxLength(1000)] public string? MedicalNotes { get; set; }
+    public bool MedicalConsent { get; set; }
     public List<Registration> Registrations { get; set; } = [];
     public List<Bicycle> Bicycles { get; set; } = [];
 }
