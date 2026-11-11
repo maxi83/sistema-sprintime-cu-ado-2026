@@ -95,13 +95,32 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> AssignBib(int registrationId, string bibNumber)
     {
-        var reg = await db.Registrations.FirstOrDefaultAsync(x => x.Id == registrationId);
+        var reg = await db.Registrations.Include(x => x.Cyclist).FirstOrDefaultAsync(x => x.Id == registrationId);
         if (reg is null) return NotFound();
-        bibNumber = (bibNumber ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(bibNumber)) { TempData["Error"] = "Ingresá un dorsal."; return RedirectToAction(nameof(Participants), new { eventId = reg.EventId }); }
-        var exists = await db.Registrations.AnyAsync(x => x.EventId == reg.EventId && x.Id != reg.Id && x.BibNumber == bibNumber);
-        if (exists) TempData["Error"] = "Ese dorsal ya está asignado.";
-        else { reg.BibNumber = bibNumber; await db.SaveChangesAsync(); TempData["Success"] = "Dorsal actualizado."; }
+        if (!int.TryParse(bibNumber, out var number) || number < 1 || number > 200)
+        {
+            TempData["Error"] = "Ingresá un dorsal del 1 al 200.";
+            return RedirectToAction(nameof(Participants), new { eventId = reg.EventId });
+        }
+        var bib = number.ToString();
+        if (await db.Cyclists.AnyAsync(x => x.Id != reg.CyclistId && x.SprintimeBib == bib) ||
+            await db.Registrations.AnyAsync(x => x.CyclistId != reg.CyclistId && x.BibNumber == bib))
+        {
+            TempData["Error"] = "Ese dorsal ya está asignado a otro ciclista.";
+            return RedirectToAction(nameof(Participants), new { eventId = reg.EventId });
+        }
+        reg.Cyclist.SprintimeBib = bib;
+        var registrations = await db.Registrations.Where(x => x.CyclistId == reg.CyclistId).ToListAsync();
+        foreach (var entry in registrations) entry.BibNumber = bib;
+        try
+        {
+            await db.SaveChangesAsync();
+            TempData["Success"] = "Dorsal permanente actualizado para todas las carreras del ciclista.";
+        }
+        catch (DbUpdateException)
+        {
+            TempData["Error"] = "No se pudo guardar el dorsal; verificá que no esté ocupado.";
+        }
         return RedirectToAction(nameof(Participants), new { eventId = reg.EventId });
     }
 
