@@ -15,6 +15,6 @@
 <label class="check-field"><input asp-for="HasInsurance"/> Tengo seguro</label><label class="field"><span>Número de seguro/póliza (si corresponde)</span><input asp-for="InsuranceNumber"/></label>
 <label class="field span-2"><span>Enfermedades de base (opcional)</span><textarea asp-for="MedicalConditions" rows="3"></textarea></label>
 <label class="field span-2"><span>Alergias y observaciones médicas (opcional)</span><textarea asp-for="MedicalNotes" rows="3"></textarea></label></div>
-<label class="check-field"><input asp-for="MedicalConsent" required/> <span>Consiento el tratamiento de estos datos para gestionar mi inscripción y la seguridad de las carreras, con acceso limitado al personal autorizado.</span></label></div>
+<label class="check-field"><input type="checkbox" id="MedicalConsent" name="MedicalConsent" value="true" required aria-describedby="medical-consent-help"/> <span>Consiento el tratamiento de estos datos para gestionar mi inscripción y la seguridad de las carreras, con acceso limitado al personal autorizado.</span></label><span id="medical-consent-help" asp-validation-for="MedicalConsent" class="field-error"></span></div>
 <button class="btn btn-primary btn-lg" type="submit">Crear cuenta y continuar →</button><p>¿Ya tenés cuenta? <a asp-action="CyclistLogin" asp-route-returnUrl="@Model.ReturnUrl">Iniciar sesión</a></p></form></div></section>
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }
