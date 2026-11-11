@@ -8,6 +8,14 @@ namespace lucho_sprintime.Controllers;
 
 public class CyclistController(ApplicationDbContext db) : Controller
 {
+    [Authorize(Roles = "Cyclist"), HttpGet]
+    public async Task<IActionResult> Profile()
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var cyclistId)) return Challenge();
+        var cyclist = await db.Cyclists.AsNoTracking().FirstOrDefaultAsync(x => x.Id == cyclistId);
+        return cyclist is null ? NotFound() : View(cyclist);
+    }
+
     [Authorize(Roles = "Cyclist")]
     public async Task<IActionResult> Dashboard()
     {
