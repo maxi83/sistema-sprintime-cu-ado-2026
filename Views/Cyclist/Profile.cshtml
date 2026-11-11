@@ -9,6 +9,20 @@
         <p>Datos registrados en SprinTime.</p>
         <div class="admin-card" style="max-width:760px;padding:24px;margin-top:24px">
             <h2>@Model.FirstName @Model.LastName</h2>
+            @{
+                var dorsal = int.TryParse(Model.SprintimeBib, out var bib) ? bib : 0;
+                var color = dorsal == 0 ? "#a3a3a3" : dorsal <= 39 ? "#eab308" : dorsal <= 79 ? "#ef4444" : dorsal <= 119 ? "#3b82f6" : dorsal <= 159 ? "#22c55e" : "#ec4899";
+            }
+            <div style="margin:20px 0;padding:18px;border:2px solid @color;border-radius:14px">
+                <small>DORSAL PERMANENTE SPRINTIME</small>
+                <h2 style="color:@color;margin:8px 0">@(dorsal == 0 ? "Sin asignar" : dorsal.ToString("D3"))</h2>
+                <form asp-controller="Cyclist" asp-action="SetBib" method="post" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                    <label for="bibNumber">Dorsal (1–200)</label>
+                    <input id="bibNumber" type="number" min="1" max="200" required name="bibNumber" value="@(dorsal == 0 ? "" : dorsal.ToString())" style="max-width:120px" />
+                    <button class="btn btn-primary" type="submit">Guardar dorsal</button>
+                </form>
+                <small>1–39 amarillo · 40–79 rojo · 80–119 azul · 120–159 verde · 160–200 rosa. La asignación debe respetar la categoría indicada por el organizador.</small>
+            </div>
             <div class="status-grid">
                 <div><small>DNI</small><strong>@Model.Dni</strong></div>
                 <div><small>EMAIL</small><strong>@Model.Email</strong></div>
