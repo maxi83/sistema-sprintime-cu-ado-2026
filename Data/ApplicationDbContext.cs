@@ -27,6 +27,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         modelBuilder.Entity<HistoricPodium>().HasIndex(x => new { x.EventId, x.Category, x.Place }).IsUnique();
         modelBuilder.Entity<Cyclist>().HasIndex(x => x.Dni).IsUnique();
         modelBuilder.Entity<Cyclist>().HasIndex(x => x.Email);
+        modelBuilder.Entity<Cyclist>().HasIndex(x => x.SprintimeBib).IsUnique().HasFilter("[SprintimeBib] IS NOT NULL");
         modelBuilder.Entity<Registration>().HasIndex(x => new { x.EventId, x.CyclistId }).IsUnique();
         modelBuilder.Entity<Registration>().HasIndex(x => x.QrToken).IsUnique();
         modelBuilder.Entity<Registration>().HasIndex(x => new { x.EventId, x.BibNumber }).IsUnique().HasFilter("[BibNumber] IS NOT NULL");
