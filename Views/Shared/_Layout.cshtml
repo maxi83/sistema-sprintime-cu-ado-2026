@@ -27,7 +27,7 @@
                 <a asp-controller="Results" asp-action="Latest">Últimos resultados</a>
                 @if (social?.RankingEnabled == true) { <a asp-controller="Ranking" asp-action="Index">Ranking</a> }
 
-                @if (User.IsInRole("Cyclist")) { <a asp-controller="Cyclist" asp-action="Dashboard">Mi perfil</a> }
+                @if (User.IsInRole("Cyclist")) { <a asp-controller="Cyclist" asp-action="Profile">Mi perfil</a> }
                 else { <a asp-controller="Account" asp-action="CyclistLogin">Espacio ciclista</a> }
                 @if (User.Identity?.IsAuthenticated == true)
                 {
