@@ -23,6 +23,7 @@ public class Cyclist
     [MaxLength(1000)] public string? MedicalConditions { get; set; }
     [MaxLength(1000)] public string? MedicalNotes { get; set; }
     public bool MedicalConsent { get; set; }
+    [MaxLength(20)] public string? SprintimeBib { get; set; }
     public List<Registration> Registrations { get; set; } = [];
     public List<Bicycle> Bicycles { get; set; } = [];
 }
