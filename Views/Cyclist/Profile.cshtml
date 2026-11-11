@@ -1,0 +1,23 @@
+@model lucho_sprintime.Models.Cyclist
+@{
+    ViewData["Title"] = "Mi perfil";
+}
+<section class="section">
+    <div class="shell">
+        <span class="eyebrow">ESPACIO CICLISTA</span>
+        <h1>Mi perfil</h1>
+        <p>Datos registrados en SprinTime.</p>
+        <div class="admin-card" style="max-width:760px;padding:24px;margin-top:24px">
+            <h2>@Model.FirstName @Model.LastName</h2>
+            <div class="status-grid">
+                <div><small>DNI</small><strong>@Model.Dni</strong></div>
+                <div><small>EMAIL</small><strong>@Model.Email</strong></div>
+                <div><small>TELÉFONO</small><strong>@Model.Phone</strong></div>
+                <div><small>CIUDAD</small><strong>@Model.City</strong></div>
+                <div><small>EQUIPO</small><strong>@Model.Team</strong></div>
+                <div><small>FECHA DE NACIMIENTO</small><strong>@Model.BirthDate.ToString("dd/MM/yyyy")</strong></div>
+            </div>
+            <a class="btn btn-outline" asp-controller="Cyclist" asp-action="Dashboard">Volver a mi temporada</a>
+        </div>
+    </div>
+</section>
