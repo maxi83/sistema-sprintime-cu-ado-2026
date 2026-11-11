@@ -77,7 +77,15 @@ using (var scope = app.Services.CreateScope())
             IF COL_LENGTH('dbo.Cyclists', 'MedicalNotes') IS NULL ALTER TABLE dbo.Cyclists ADD MedicalNotes nvarchar(1000) NULL;
             IF COL_LENGTH('dbo.Cyclists', 'MedicalConsent') IS NULL ALTER TABLE dbo.Cyclists ADD MedicalConsent bit NOT NULL CONSTRAINT DF_Cyclists_MedicalConsent DEFAULT 0;
             IF COL_LENGTH('dbo.Cyclists', 'SprintimeBib') IS NULL ALTER TABLE dbo.Cyclists ADD SprintimeBib nvarchar(20) NULL;
-            IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Cyclists') AND name = N'IX_Cyclists_SprintimeBib') CREATE UNIQUE INDEX IX_Cyclists_SprintimeBib ON dbo.Cyclists(SprintimeBib) WHERE SprintimeBib IS NOT NULL;
+        END
+        """);
+    // Run in a separate SQL batch: SQL Server compiles CREATE INDEX only after the new column exists.
+    await db.Database.ExecuteSqlRawAsync("""
+        IF OBJECT_ID(N'dbo.Cyclists', N'U') IS NOT NULL
+           AND COL_LENGTH('dbo.Cyclists', 'SprintimeBib') IS NOT NULL
+           AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Cyclists') AND name = N'IX_Cyclists_SprintimeBib')
+        BEGIN
+            CREATE UNIQUE INDEX IX_Cyclists_SprintimeBib ON dbo.Cyclists(SprintimeBib) WHERE SprintimeBib IS NOT NULL;
         END
         """);
     await db.Database.ExecuteSqlRawAsync("""
