@@ -128,7 +128,7 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
     public async Task<IActionResult> EditEvent(int? id = null)
     {
         if (!id.HasValue)
-            return View(new EventEditViewModel { StartDate = DateTime.Today.AddDays(30).AddHours(9), RegistrationOpenAt = DateTime.Today, RegistrationCloseAt = DateTime.Today.AddDays(28).AddHours(22) });
+            return View(new EventEditViewModel { StartDate = DateTime.Today.AddDays(30).AddHours(9), RegistrationOpenAt = DateTime.Today, RegistrationCloseAt = DateTime.Today.AddDays(28).AddHours(22), Status = EventStatus.Published });
         var race = await db.Events.Include(x => x.HistoricPodiums).Include(x => x.Distances).ThenInclude(x => x.Categories).FirstOrDefaultAsync(x => x.Id == id.Value);
         if (race is null) return NotFound();
         return View(new EventEditViewModel
