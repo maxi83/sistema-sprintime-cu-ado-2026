@@ -55,35 +55,86 @@
     const count = qs('[data-queue-count]', root), syncBtn = qs('[data-sync-queue]', root);
     const lastTime = qs('[data-last-time]', root), lastName = qs('[data-last-name]', root), lastBib = qs('[data-last-bib]', root);
     const key = `sprintime_queue_${eventId}_${checkpointId}`;
-    const queue = () => JSON.parse(localStorage.getItem(key) || '[]');
-    const save = entries => { localStorage.setItem(key, JSON.stringify(entries)); count.textContent = entries.length; };
-    save(queue());
-
-    async function register() {
-      const bib = (input.value || '').trim(); if (!bib) return;
-      const entry = { eventId, checkpointId, bibNumber: bib, timestampUtc: new Date().toISOString(), clientEntryId: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}` };
-      input.value = ''; input.focus();
-      if (!navigator.onLine) { const items = queue(); items.push(entry); save(items); showLocal(entry); message.textContent = 'Guardado offline. Se sincronizará cuando vuelva la conexión.'; return; }
+    const validBib = bib => /^(?:[1-9]\d*)$/.test(String(bib || '').trim()) && Number(bib) <= 200;
+    const queue = () => {
       try {
-        const res = await fetch('/RaceDay/RegisterPass', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(entry) });
+        const entries = JSON.parse(localStorage.getItem(key) || '[]');
+        return Array.isArray(entries) ? entries : [];
+      } catch { return []; }
+    };
+    const save = entries => { localStorage.setItem(key, JSON.stringify(entries)); count.textContent = entries.length; };
+    // Eliminar únicamente dorsales inválidos de versiones anteriores (p. ej. #0).
+    save(queue().filter(entry => validBib(entry.bibNumber)));
+
+    let registering = false;
+    async function register() {
+      if (registering) return;
+      const bib = (input.value || '').trim();
+      if (!validBib(bib)) {
+        message.textContent = 'Ingresá un dorsal válido entre 1 y 200. No se registró ningún paso.';
+        input.focus();
+        return;
+      }
+      const entry = { eventId, checkpointId, bibNumber: bib, timestampUtc: new Date().toISOString(), clientEntryId: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}` };
+      registering = true;
+      button.disabled = true;
+      try {
+        if (!navigator.onLine) {
+          save([...queue(), entry]);
+          showLocal(entry);
+          message.textContent = 'Sin conexión. Paso guardado en este dispositivo para sincronizar después.';
+          input.value = '';
+          return;
+        }
+        let res;
+        try {
+          res = await fetch('/RaceDay/RegisterPass', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(entry) });
+        } catch {
+          save([...queue(), entry]);
+          showLocal(entry);
+          message.textContent = 'Sin conexión con el servidor. Paso guardado para sincronizar después.';
+          input.value = '';
+          return;
+        }
+        if (!res.ok) {
+          let details;
+          try { details = await res.json(); } catch {}
+          message.textContent = 'No se registró el paso: ' + (details?.error || 'El servidor rechazó el dorsal.');
+          input.focus();
+          return;
+        }
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'No se pudo registrar.');
-        showServer(entry, data); message.textContent = 'Registro confirmado en servidor.';
-      } catch (err) {
-        const items = queue(); items.push(entry); save(items); showLocal(entry); message.textContent = `Guardado en cola: ${err.message}`;
+        showServer(entry, data);
+        message.textContent = 'Registro confirmado en servidor.';
+        input.value = '';
+        input.focus();
+      } finally {
+        registering = false;
+        button.disabled = false;
       }
     }
     function showLocal(entry) { lastTime.textContent = new Date(entry.timestampUtc).toLocaleTimeString('es-AR'); lastName.textContent = 'Pendiente de sincronizar'; lastBib.textContent = `#${entry.bibNumber}`; }
     function showServer(entry, data) { lastTime.textContent = new Date(data.timestamp || entry.timestampUtc).toLocaleTimeString('es-AR'); lastName.textContent = data.name || 'Corredor registrado'; lastBib.textContent = `#${entry.bibNumber}`; }
     async function syncQueue() {
       if (!navigator.onLine) { message.textContent = 'Todavía no hay conexión.'; return; }
-      const items = queue(); if (!items.length) { message.textContent = 'La cola offline está vacía.'; return; }
+      const items = queue();
+      if (!items.length) { message.textContent = 'La cola offline está vacía.'; return; }
       try {
         const res = await fetch('/RaceDay/Sync', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(items) });
-        const data = await res.json(); if (!res.ok) throw new Error('Error de sincronización');
-        save([]); message.textContent = `${data.synced} registros sincronizados.`;
-        if (data.errors?.length) message.textContent += ` Errores: ${data.errors.join(' · ')}`;
-      } catch { message.textContent = 'No se pudo sincronizar. La cola permanece guardada.'; }
+        if (!res.ok) throw new Error('Error de sincronización');
+        const data = await res.json();
+        if (data.errors?.length) {
+          // Conservar los fallidos: el servidor deduplica los pasos ya aceptados por ClientEntryId.
+          const failed = new Set(data.errors.map(error => String(error).split(':')[0].trim()));
+          save(items.filter(entry => failed.has(String(entry.bibNumber))));
+          message.textContent = `${data.synced} sincronizados; ${data.errors.length} pendientes: ${data.errors.join(' · ')}`;
+        } else {
+          save([]);
+          message.textContent = `${data.synced} registros sincronizados.`;
+        }
+      } catch {
+        message.textContent = 'No se pudo sincronizar. La cola permanece guardada.';
+      }
     }
     button?.addEventListener('click', register);
     input?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); register(); } });
