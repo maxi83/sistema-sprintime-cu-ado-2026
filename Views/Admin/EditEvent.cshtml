@@ -1,12 +1,22 @@
 @model EventEditViewModel
 @{ ViewData["Title"] = Model.Id.HasValue ? "Editar carrera" : "Nueva carrera"; ViewData["BodyClass"]="admin-page"; }
-<section class="admin-standalone"><div class="shell narrow"><div class="admin-topbar"><div><a class="back-link" asp-action="Dashboard" asp-route-eventId="@Model.Id">← Control Center</a><span class="eyebrow">CONFIGURACIÓN DE EVENTO</span><h1>@(Model.Id.HasValue?"Editar carrera":"Crear nueva carrera")</h1><p>La ficha pública y la operación comparten la misma fuente de datos.</p></div></div><form asp-action="EditEvent" method="post" class="premium-form admin-form" id="race-editor-form" data-draft-key="sprintime-event-@(Model.Id?.ToString() ?? "nuevo")"><input type="hidden" asp-for="Id"/><div asp-validation-summary="All" class="validation-summary" role="alert"></div><div class="form-card"><div class="form-card-head"><span>01</span><div><h2>Identidad y publicación</h2><p>Cómo se presenta el evento.</p></div></div><div class="field-grid"><label class="field span-2"><span>Nombre</span><input asp-for="Name"/><span asp-validation-for="Name" class="field-error"></span></label><label class="field"><span>Identificador del enlace (slug)</span><input asp-for="Slug"/><span asp-validation-for="Slug" class="field-error"></span></label><label class="field"><span>Estado</span><select asp-for="Status"><option value="0">Borrador</option><option value="1">Publicada</option><option value="2">Inscripciones abiertas</option><option value="3">Inscripciones cerradas</option><option value="4">En curso</option><option value="5">Finalizada</option><option value="6">Suspendida</option></select></label><label class="field span-2"><span>Descripción</span><textarea asp-for="Description" rows="5"></textarea></label><label class="field span-2"><span>Imagen hero (URL o /images/...)</span><input asp-for="HeroImageUrl"/></label></div></div><div class="form-card"><div class="form-card-head"><span>02</span><div><h2>Fecha y ubicación</h2><p>Define también la ventana de inscripción.</p></div></div><div class="field-grid"><label class="field"><span>Ciudad</span><input asp-for="City"/><span asp-validation-for="City" class="field-error"></span></label><label class="field"><span>Provincia</span><input asp-for="Province"/><span asp-validation-for="Province" class="field-error"></span></label><label class="field span-2"><span>Lugar</span><input asp-for="Venue"/></label><label class="field"><span>Inicio de carrera</span><input asp-for="StartDate" type="hidden" asp-format="{0:yyyy-MM-ddTHH:mm}"/><span style="display:block;position:relative"><input type="text" data-date-display="StartDate" placeholder="DD/MM/AAAA HH:mm" inputmode="numeric" maxlength="16" autocomplete="off" required aria-label="StartDate (día/mes/año hora)" style="padding-right:58px;width:100%"/><button type="button" data-open-calendar="StartDate" aria-label="Abrir calendario" title="Elegir fecha" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:0;font-size:22px;cursor:pointer;padding:8px">📅</button><input type="date" data-calendar-for="StartDate" lang="es-AR" tabindex="-1" aria-label="Calendario" style="position:absolute;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none"/></span><small style="display:block;margin-top:4px">Formato: DD/MM/AAAA HH:mm (24 horas). Ej.: 15/03/2027 09:00</small><span asp-validation-for="StartDate" class="field-error"></span></label><label class="field"><span>Apertura inscripción</span><input asp-for="RegistrationOpenAt" type="hidden" asp-format="{0:yyyy-MM-ddTHH:mm}"/><span style="display:block;position:relative"><input type="text" data-date-display="RegistrationOpenAt" placeholder="DD/MM/AAAA HH:mm" inputmode="numeric" maxlength="16" autocomplete="off" required aria-label="RegistrationOpenAt (día/mes/año hora)" style="padding-right:58px;width:100%"/><button type="button" data-open-calendar="RegistrationOpenAt" aria-label="Abrir calendario" title="Elegir fecha" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:0;font-size:22px;cursor:pointer;padding:8px">📅</button><input type="date" data-calendar-for="RegistrationOpenAt" lang="es-AR" tabindex="-1" aria-label="Calendario" style="position:absolute;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none"/></span><small style="display:block;margin-top:4px">Formato: DD/MM/AAAA HH:mm (24 horas). Ej.: 15/03/2027 09:00</small><span asp-validation-for="RegistrationOpenAt" class="field-error"></span></label><label class="field"><span>Cierre inscripción</span><input asp-for="RegistrationCloseAt" type="hidden" asp-format="{0:yyyy-MM-ddTHH:mm}"/><span style="display:block;position:relative"><input type="text" data-date-display="RegistrationCloseAt" placeholder="DD/MM/AAAA HH:mm" inputmode="numeric" maxlength="16" autocomplete="off" required aria-label="RegistrationCloseAt (día/mes/año hora)" style="padding-right:58px;width:100%"/><button type="button" data-open-calendar="RegistrationCloseAt" aria-label="Abrir calendario" title="Elegir fecha" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:0;font-size:22px;cursor:pointer;padding:8px">📅</button><input type="date" data-calendar-for="RegistrationCloseAt" lang="es-AR" tabindex="-1" aria-label="Calendario" style="position:absolute;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none"/></span><small style="display:block;margin-top:4px">Formato: DD/MM/AAAA HH:mm (24 horas). Ej.: 15/03/2027 09:00</small><span asp-validation-for="RegistrationCloseAt" class="field-error"></span></label><label class="field"><span>Desnivel +m</span><input asp-for="ElevationGainMeters" type="number"/></label></div></div><div class="form-card"><div class="form-card-head"><span>03</span><div><h2>Distancias y categorías</h2><p>Una carrera puede tener múltiples recorridos.</p></div></div><div data-distance-editor>@for(var i=0;i<Model.Distances.Count;i++){<div class="distance-editor-row"><input type="hidden" asp-for="Distances[i].Id"/><label class="field"><span>Nombre</span><input asp-for="Distances[i].Name"/></label><label class="field"><span>Kilómetros</span><input asp-for="Distances[i].Kilometers" type="number" step="0.1"/></label><label class="field"><span>Precio</span><input asp-for="Distances[i].Price" type="number" step="1"/></label><label class="field"><span>Cupo</span><input asp-for="Distances[i].MaxParticipants" type="number"/></label><label class="field span-2"><span>Categorías (separadas por coma)</span><input asp-for="Distances[i].Categories"/></label></div>}</div><p class="form-note">Para agregar más distancias, guardá el evento y repetí el bloque desde una actualización posterior. La arquitectura ya soporta múltiples distancias.</p></div><div class="form-card"><div class="form-card-head"><span>04</span><div><h2>Archivos y reglas</h2><p>Recorrido, reglamento y operación.</p></div></div><div class="field-grid"><label class="field"><span>Reglamento URL</span><input asp-for="RegulationUrl"/></label><label class="field"><span>GPX URL</span><input asp-for="GpxUrl"/></label></div><label class="check-field"><input asp-for="ShowPublicParticipants"/><span>Permitir lista pública de inscriptos</span></label><label class="check-field"><input asp-for="AllowOnsiteRegistration"/><span>Permitir inscripción presencial después del cierre</span></label></div><div class="form-card"><div class="form-card-head"><span>05</span><div><h2>Historial, podios y fotos</h2><p>Usá el estado Finalizada para incluir carreras anteriores en el historial.</p></div></div>
+<section class="admin-standalone"><div class="shell narrow"><div class="admin-topbar"><div><a class="back-link" asp-action="Dashboard" asp-route-eventId="@Model.Id">← Control Center</a><span class="eyebrow">CONFIGURACIÓN DE EVENTO</span><h1>@(Model.Id.HasValue?"Editar carrera":"Crear nueva carrera")</h1><p>La ficha pública y la operación comparten la misma fuente de datos.</p></div></div><form asp-action="EditEvent" method="post" class="premium-form admin-form" id="race-editor-form" data-draft-key="sprintime-event-@(Model.Id?.ToString() ?? "nuevo")"><input type="hidden" asp-for="Id"/><div asp-validation-summary="All" class="validation-summary" role="alert"></div><div class="form-card"><div class="form-card-head"><span>01</span><div><h2>Identidad y publicación</h2><p>Cómo se presenta el evento.</p></div></div><div class="field-grid"><label class="field span-2"><span>Nombre</span><input asp-for="Name"/><span asp-validation-for="Name" class="field-error"></span></label><label class="field"><span>Identificador del enlace (slug)</span><input asp-for="Slug"/><span asp-validation-for="Slug" class="field-error"></span></label><label class="field"><span>Estado</span><select asp-for="Status"><option value="0">Borrador</option><option value="1">Publicada</option><option value="2">Inscripciones abiertas</option><option value="3">Inscripciones cerradas</option><option value="4">En curso</option><option value="5">Finalizada</option><option value="6">Suspendida</option></select></label><label class="field span-2"><span>Descripción</span><textarea asp-for="Description" rows="5"></textarea></label><label class="field span-2"><span>Imagen hero (URL o /images/...)</span><input asp-for="HeroImageUrl"/></label></div></div><div class="form-card"><div class="form-card-head"><span>02</span><div><h2>Fecha y ubicación</h2><p>Define también la ventana de inscripción.</p></div></div><div class="field-grid"><label class="field"><span>Ciudad</span><input asp-for="City"/><span asp-validation-for="City" class="field-error"></span></label><label class="field"><span>Provincia</span><input asp-for="Province"/><span asp-validation-for="Province" class="field-error"></span></label><label class="field span-2"><span>Lugar</span><input asp-for="Venue"/></label><label class="field"><span>Inicio de carrera</span><input asp-for="StartDate" type="hidden" asp-format="{0:yyyy-MM-ddTHH:mm}"/><span style="display:block;position:relative"><input type="text" data-date-display="StartDate" placeholder="DD/MM/AAAA HH:mm" inputmode="numeric" maxlength="16" autocomplete="off" required aria-label="StartDate (día/mes/año hora)" style="padding-right:58px;width:100%"/><button type="button" data-open-calendar="StartDate" aria-label="Abrir calendario" title="Elegir fecha" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:0;font-size:22px;cursor:pointer;padding:8px">📅</button><div data-calendar-for="StartDate" hidden class="calendario-es" role="group" aria-label="Calendario en español"></div></span><small style="display:block;margin-top:4px">Formato: DD/MM/AAAA HH:mm (24 horas). Ej.: 15/03/2027 09:00</small><span asp-validation-for="StartDate" class="field-error"></span></label><label class="field"><span>Apertura inscripción</span><input asp-for="RegistrationOpenAt" type="hidden" asp-format="{0:yyyy-MM-ddTHH:mm}"/><span style="display:block;position:relative"><input type="text" data-date-display="RegistrationOpenAt" placeholder="DD/MM/AAAA HH:mm" inputmode="numeric" maxlength="16" autocomplete="off" required aria-label="RegistrationOpenAt (día/mes/año hora)" style="padding-right:58px;width:100%"/><button type="button" data-open-calendar="RegistrationOpenAt" aria-label="Abrir calendario" title="Elegir fecha" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:0;font-size:22px;cursor:pointer;padding:8px">📅</button><div data-calendar-for="RegistrationOpenAt" hidden class="calendario-es" role="group" aria-label="Calendario en español"></div></span><small style="display:block;margin-top:4px">Formato: DD/MM/AAAA HH:mm (24 horas). Ej.: 15/03/2027 09:00</small><span asp-validation-for="RegistrationOpenAt" class="field-error"></span></label><label class="field"><span>Cierre inscripción</span><input asp-for="RegistrationCloseAt" type="hidden" asp-format="{0:yyyy-MM-ddTHH:mm}"/><span style="display:block;position:relative"><input type="text" data-date-display="RegistrationCloseAt" placeholder="DD/MM/AAAA HH:mm" inputmode="numeric" maxlength="16" autocomplete="off" required aria-label="RegistrationCloseAt (día/mes/año hora)" style="padding-right:58px;width:100%"/><button type="button" data-open-calendar="RegistrationCloseAt" aria-label="Abrir calendario" title="Elegir fecha" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:0;font-size:22px;cursor:pointer;padding:8px">📅</button><div data-calendar-for="RegistrationCloseAt" hidden class="calendario-es" role="group" aria-label="Calendario en español"></div></span><small style="display:block;margin-top:4px">Formato: DD/MM/AAAA HH:mm (24 horas). Ej.: 15/03/2027 09:00</small><span asp-validation-for="RegistrationCloseAt" class="field-error"></span></label><label class="field"><span>Desnivel +m</span><input asp-for="ElevationGainMeters" type="number"/></label></div></div><div class="form-card"><div class="form-card-head"><span>03</span><div><h2>Distancias y categorías</h2><p>Una carrera puede tener múltiples recorridos.</p></div></div><div data-distance-editor>@for(var i=0;i<Model.Distances.Count;i++){<div class="distance-editor-row"><input type="hidden" asp-for="Distances[i].Id"/><label class="field"><span>Nombre</span><input asp-for="Distances[i].Name"/></label><label class="field"><span>Kilómetros</span><input asp-for="Distances[i].Kilometers" type="number" step="0.1"/></label><label class="field"><span>Precio</span><input asp-for="Distances[i].Price" type="number" step="1"/></label><label class="field"><span>Cupo</span><input asp-for="Distances[i].MaxParticipants" type="number"/></label><label class="field span-2"><span>Categorías (separadas por coma)</span><input asp-for="Distances[i].Categories"/></label></div>}</div><p class="form-note">Para agregar más distancias, guardá el evento y repetí el bloque desde una actualización posterior. La arquitectura ya soporta múltiples distancias.</p></div><div class="form-card"><div class="form-card-head"><span>04</span><div><h2>Archivos y reglas</h2><p>Recorrido, reglamento y operación.</p></div></div><div class="field-grid"><label class="field"><span>Reglamento URL</span><input asp-for="RegulationUrl"/></label><label class="field"><span>GPX URL</span><input asp-for="GpxUrl"/></label></div><label class="check-field"><input asp-for="ShowPublicParticipants"/><span>Permitir lista pública de inscriptos</span></label><label class="check-field"><input asp-for="AllowOnsiteRegistration"/><span>Permitir inscripción presencial después del cierre</span></label></div><div class="form-card"><div class="form-card-head"><span>05</span><div><h2>Historial, podios y fotos</h2><p>Usá el estado Finalizada para incluir carreras anteriores en el historial.</p></div></div>
 <label class="field"><span>Álbum de Google Drive (enlace público de lectura)</span><input asp-for="PhotoAlbumUrl" type="url" placeholder="https://drive.google.com/..."/></label>
 <label class="field"><span>Hasta 6 enlaces de fotografías (uno por línea; imágenes HTTPS públicas)</span><textarea asp-for="GalleryImageUrls" rows="6" placeholder="https://.../foto1.jpg"></textarea></label>
 <label class="field"><span>Podios históricos (una línea por puesto: Categoría | Puesto | Nombre y apellido)</span>
 <textarea asp-for="PodiumEntries" rows="9" placeholder="Master A | 1 | Ciclista real"></textarea></label>
 <p class="form-note">Los podios históricos son datos que el organizador carga y valida. No agregues nombres ficticios.</p></div>
 <button class="btn btn-primary btn-lg" type="submit">Guardar carrera <span>→</span></button></form></div></section>
+<style>
+.calendario-es[hidden]{display:none!important}
+.calendario-es{position:absolute;z-index:100;top:calc(100% + 5px);left:0;width:min(340px,95vw);padding:12px;background:#fff;color:#222;border:1px solid #bbb;border-radius:12px;box-shadow:0 12px 28px rgba(0,0,0,.22)}
+.calendario-es-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;text-transform:capitalize}
+.calendario-es-header button{font-size:22px;cursor:pointer;border:1px solid #ddd;background:#f8f8f8;border-radius:6px;width:38px;height:36px}
+.calendario-es-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
+.calendario-es-grid span{padding:7px 0;font-size:12px}
+.calendario-es-grid button{cursor:pointer;border:1px solid transparent;border-radius:6px;background:#f4f4f4;min-height:36px;color:#222}
+.calendario-es-grid button:hover,.calendario-es-grid button:focus{background:#ff7000;color:white}
+</style>
 @section Scripts {
 <partial name="_ValidationScriptsPartial" />
 <script>
@@ -39,28 +49,77 @@
     date.visible.value = toDisplay(date.hidden.value);
     date.calendar = form.querySelector('[data-calendar-for="' + date.id + '"]');
     date.button = form.querySelector('[data-open-calendar="' + date.id + '"]');
-    const syncCalendar = () => {
-      const match = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(date.visible.value);
-      if (match) date.calendar.value = match[3] + '-' + match[2] + '-' + match[1];
-    };
-    syncCalendar();
-    date.button.addEventListener('click', () => {
-      syncCalendar();
-      if (typeof date.calendar.showPicker === 'function') {
-        try { date.calendar.showPicker(); } catch (_) { date.calendar.focus(); date.calendar.click(); }
-      } else {
-        date.calendar.focus();
-        date.calendar.click();
+    const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const weekNames = ['Lu','Ma','Mi','Ju','Vi','Sá','Do'];
+    let shownYear, shownMonth;
+    const closeCalendar = () => { date.calendar.hidden = true; date.button.setAttribute('aria-expanded', 'false'); };
+    const renderCalendar = () => {
+      date.calendar.replaceChildren();
+      const header = document.createElement('div');
+      header.className = 'calendario-es-header';
+      const previous = document.createElement('button');
+      previous.type = 'button'; previous.textContent = '‹'; previous.setAttribute('aria-label','Mes anterior');
+      const heading = document.createElement('strong');
+      heading.textContent = monthNames[shownMonth] + ' ' + shownYear;
+      const next = document.createElement('button');
+      next.type = 'button'; next.textContent = '›'; next.setAttribute('aria-label','Mes siguiente');
+      previous.addEventListener('click', () => moveMonth(-1));
+      next.addEventListener('click', () => moveMonth(1));
+      header.append(previous, heading, next);
+      date.calendar.append(header);
+      const grid = document.createElement('div');
+      grid.className = 'calendario-es-grid';
+      for (const dayName of weekNames) {
+        const label = document.createElement('span');
+        label.textContent = dayName;
+        grid.append(label);
       }
+      const offset = (new Date(shownYear, shownMonth, 1).getDay() + 6) % 7;
+      for (let i = 0; i < offset; i++) grid.append(document.createElement('span'));
+      const days = new Date(shownYear, shownMonth + 1, 0).getDate();
+      for (let day = 1; day <= days; day++) {
+        const button = document.createElement('button');
+        button.type = 'button'; button.textContent = String(day);
+        button.setAttribute('aria-label', day + ' de ' + monthNames[shownMonth] + ' de ' + shownYear);
+        button.addEventListener('click', () => {
+          const pad = n => String(n).padStart(2, '0');
+          const time = /\b(\d{2}:\d{2})$/.exec(date.visible.value);
+          date.visible.value = pad(day) + '/' + pad(shownMonth + 1) + '/' + shownYear + ' ' + (time ? time[1] : '09:00');
+          date.visible.setCustomValidity('');
+          date.visible.dispatchEvent(new Event('input', { bubbles:true }));
+          closeCalendar();
+          date.visible.focus();
+        });
+        grid.append(button);
+      }
+      date.calendar.append(grid);
+    };
+    const moveMonth = delta => {
+      const target = new Date(shownYear, shownMonth + delta, 1);
+      shownYear = target.getFullYear();
+      shownMonth = target.getMonth();
+      renderCalendar();
+    };
+    date.button.setAttribute('aria-expanded','false');
+    date.button.addEventListener('click', () => {
+      if (!date.calendar.hidden) { closeCalendar(); return; }
+      for (const other of dateDisplays) if (other !== date && other.calendar) {
+        other.calendar.hidden = true;
+        if (other.button) other.button.setAttribute('aria-expanded','false');
+      }
+      const match = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(date.visible.value);
+      const selected = match ? new Date(+match[3], +match[2]-1, +match[1]) : new Date();
+      shownYear = selected.getFullYear();
+      shownMonth = selected.getMonth();
+      renderCalendar();
+      date.calendar.hidden = false;
+      date.button.setAttribute('aria-expanded','true');
     });
-    date.calendar.addEventListener('change', () => {
-      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date.calendar.value);
-      if (!match) return;
-      const time = /\b(\d{2}:\d{2})$/.exec(date.visible.value);
-      const currentTime = time ? time[1] : '09:00';
-      date.visible.value = match[3] + '/' + match[2] + '/' + match[1] + ' ' + currentTime;
-      date.visible.setCustomValidity('');
-      date.visible.dispatchEvent(new Event('input', { bubbles: true }));
+    document.addEventListener('click', event => {
+      if (!date.calendar.contains(event.target) && !date.button.contains(event.target)) closeCalendar();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeCalendar();
     });
   }
   try {
