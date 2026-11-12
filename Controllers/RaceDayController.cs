@@ -34,7 +34,7 @@ public class RaceDayController(ApplicationDbContext db) : Controller
         ViewBag.Event = race; ViewBag.Query = q;
         if (string.IsNullOrWhiteSpace(q)) return View(new List<Registration>());
         q = q.Trim();
-        var matches = await db.Registrations.AsNoTracking().Where(x => x.EventId == eventId && x.PaymentStatus == PaymentStatus.Approved)
+        var matches = await db.Registrations.AsNoTracking().Where(x => x.EventId == eventId)
             .Include(x => x.Cyclist).Include(x => x.Category).Include(x => x.EventDistance)
             .Where(x => x.Cyclist.Dni == q || (x.BibNumber ?? "") == q || x.Cyclist.FirstName.Contains(q) || x.Cyclist.LastName.Contains(q) || x.QrToken.ToString() == q)
             .Take(12).ToListAsync();
