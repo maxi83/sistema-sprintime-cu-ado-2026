@@ -87,8 +87,6 @@
       event.preventDefault();
       firstInvalid.focus();
       firstInvalid.reportValidity();
-    } else {
-      try { sessionStorage.removeItem(key); } catch (_) {}
     }
   });
 })();
