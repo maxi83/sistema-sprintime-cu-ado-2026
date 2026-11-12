@@ -9,7 +9,7 @@
 <button class="btn btn-primary btn-lg" type="submit">Guardar carrera <span>→</span></button></form></div></section>
 <style>
 .calendario-es[hidden]{display:none!important}
-.calendario-es{position:absolute;z-index:100;top:calc(100% + 5px);left:0;width:min(340px,95vw);padding:12px;background:#fff;color:#222;border:1px solid #bbb;border-radius:12px;box-shadow:0 12px 28px rgba(0,0,0,.22)}
+.calendario-es{position:fixed;z-index:99999;width:min(340px,95vw);padding:12px;background:#fff;color:#222;border:1px solid #bbb;border-radius:12px;box-shadow:0 12px 28px rgba(0,0,0,.22)}
 .calendario-es-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;text-transform:capitalize}
 .calendario-es-header button{font-size:22px;cursor:pointer;border:1px solid #ddd;background:#f8f8f8;border-radius:6px;width:38px;height:36px}
 .calendario-es-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
@@ -49,6 +49,7 @@
     date.visible.value = toDisplay(date.hidden.value);
     date.calendar = form.querySelector('[data-calendar-for="' + date.id + '"]');
     date.button = form.querySelector('[data-open-calendar="' + date.id + '"]');
+    document.body.appendChild(date.calendar);
     const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
     const weekNames = ['Lu','Ma','Mi','Ju','Vi','Sá','Do'];
     let shownYear, shownMonth;
@@ -59,8 +60,24 @@
       header.className = 'calendario-es-header';
       const previous = document.createElement('button');
       previous.type = 'button'; previous.textContent = '‹'; previous.setAttribute('aria-label','Mes anterior');
-      const heading = document.createElement('strong');
-      heading.textContent = monthNames[shownMonth] + ' ' + shownYear;
+      const heading = document.createElement('span');
+      heading.style.cssText = 'display:flex;gap:5px;align-items:center';
+      const monthSelect = document.createElement('select');
+      monthSelect.setAttribute('aria-label', 'Mes');
+      monthSelect.style.cssText = 'width:auto;padding:5px;font-size:14px';
+      monthNames.forEach((name, index) => {
+        const option = new Option(name.charAt(0).toUpperCase() + name.slice(1), String(index));
+        monthSelect.add(option);
+      });
+      monthSelect.value = String(shownMonth);
+      const yearSelect = document.createElement('select');
+      yearSelect.setAttribute('aria-label', 'Año');
+      yearSelect.style.cssText = 'width:auto;padding:5px;font-size:14px';
+      for (let year = 2020; year <= 2100; year++) yearSelect.add(new Option(String(year), String(year)));
+      yearSelect.value = String(shownYear);
+      monthSelect.addEventListener('change', () => { shownMonth = Number(monthSelect.value); renderCalendar(); });
+      yearSelect.addEventListener('change', () => { shownYear = Number(yearSelect.value); renderCalendar(); });
+      heading.append(monthSelect, yearSelect);
       const next = document.createElement('button');
       next.type = 'button'; next.textContent = '›'; next.setAttribute('aria-label','Mes siguiente');
       previous.addEventListener('click', () => moveMonth(-1));
@@ -101,7 +118,9 @@
       renderCalendar();
     };
     date.button.setAttribute('aria-expanded','false');
-    date.button.addEventListener('click', () => {
+    date.button.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
       if (!date.calendar.hidden) { closeCalendar(); return; }
       for (const other of dateDisplays) if (other !== date && other.calendar) {
         other.calendar.hidden = true;
@@ -112,12 +131,19 @@
       shownYear = selected.getFullYear();
       shownMonth = selected.getMonth();
       renderCalendar();
+      const bounds = date.button.getBoundingClientRect();
+      const width = Math.min(340, window.innerWidth - 20);
+      date.calendar.style.width = width + 'px';
+      date.calendar.style.left = Math.max(10, Math.min(bounds.left, window.innerWidth - width - 10)) + 'px';
+      date.calendar.style.top = (bounds.bottom + 350 > window.innerHeight ? Math.max(8, bounds.top - 350) : bounds.bottom + 8) + 'px';
       date.calendar.hidden = false;
       date.button.setAttribute('aria-expanded','true');
     });
+    date.calendar.addEventListener('click', event => event.stopPropagation());
     document.addEventListener('click', event => {
       if (!date.calendar.contains(event.target) && !date.button.contains(event.target)) closeCalendar();
     });
+    window.addEventListener('scroll', closeCalendar, true);
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape') closeCalendar();
     });
