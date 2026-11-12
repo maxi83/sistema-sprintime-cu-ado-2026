@@ -25,7 +25,7 @@ public class EventEditViewModel
     [MaxLength(6000), Display(Name = "Podios por categoría")]
     public string? PodiumEntries { get; set; }
     public int ElevationGainMeters { get; set; }
-    public EventStatus Status { get; set; } = EventStatus.Draft;
+    public EventStatus Status { get; set; } = EventStatus.Published;
     public bool ShowPublicParticipants { get; set; } = true;
     public bool AllowOnsiteRegistration { get; set; }
     public List<DistanceInput> Distances { get; set; } = [new()];
