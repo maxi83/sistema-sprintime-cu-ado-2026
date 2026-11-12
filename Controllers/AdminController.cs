@@ -95,10 +95,12 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> AssignBib(int registrationId, string bibNumber)
     {
+        var ajax = string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
         var reg = await db.Registrations.Include(x => x.Cyclist).FirstOrDefaultAsync(x => x.Id == registrationId);
         if (reg is null) return NotFound();
         if (!int.TryParse(bibNumber, out var number) || number < 1 || number > 200)
         {
+            if (ajax) return BadRequest(new { error = "Ingresá un dorsal del 1 al 200." });
             TempData["Error"] = "Ingresá un dorsal del 1 al 200.";
             return RedirectToAction(nameof(Participants), new { eventId = reg.EventId });
         }
@@ -106,6 +108,7 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
         if (await db.Cyclists.AnyAsync(x => x.Id != reg.CyclistId && x.SprintimeBib == bib) ||
             await db.Registrations.AnyAsync(x => x.CyclistId != reg.CyclistId && x.BibNumber == bib))
         {
+            if (ajax) return Conflict(new { error = "Ese dorsal ya está asignado a otro ciclista." });
             TempData["Error"] = "Ese dorsal ya está asignado a otro ciclista.";
             return RedirectToAction(nameof(Participants), new { eventId = reg.EventId });
         }
@@ -115,10 +118,12 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
         try
         {
             await db.SaveChangesAsync();
-            TempData["Success"] = "Dorsal permanente actualizado para todas las carreras del ciclista.";
+            if (ajax) return Ok(new { bib, message = "Dorsal " + bib + " asignado correctamente." });
+            TempData["Success"] = "Dorsal " + bib + " asignado correctamente para todas las carreras del ciclista.";
         }
         catch (DbUpdateException)
         {
+            if (ajax) return Conflict(new { error = "No se pudo guardar el dorsal; verificá que no esté ocupado." });
             TempData["Error"] = "No se pudo guardar el dorsal; verificá que no esté ocupado.";
         }
         return RedirectToAction(nameof(Participants), new { eventId = reg.EventId });
