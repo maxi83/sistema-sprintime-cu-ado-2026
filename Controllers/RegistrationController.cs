@@ -119,7 +119,7 @@ public class RegistrationController(ApplicationDbContext db, IMercadoPagoService
     }
 
     [Authorize(Roles = "Administrator"), HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> DemoApprove(int id)
+    public async Task<IActionResult> DemoApprove(int id, int? returnEventId = null)
     {
         if (!env.IsDevelopment()) return NotFound();
         var r = await db.Registrations.Include(x => x.Payment).FirstOrDefaultAsync(x => x.Id == id);
@@ -128,6 +128,7 @@ public class RegistrationController(ApplicationDbContext db, IMercadoPagoService
         if (r.Payment is not null) { r.Payment.Status = PaymentStatus.Approved; r.Payment.UpdatedAt = DateTime.UtcNow; r.Payment.ExternalId = $"DEMO-{id}"; }
         await db.SaveChangesAsync();
         TempData["Success"] = "Pago de desarrollo aprobado. El cupo quedó confirmado.";
+        if (returnEventId == r.EventId) return RedirectToAction("Participants", "Admin", new { eventId = r.EventId });
         return RedirectToAction(nameof(Status), new { id });
     }
 
