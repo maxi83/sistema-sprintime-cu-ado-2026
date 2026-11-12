@@ -27,6 +27,30 @@ public class RaceDayController(ApplicationDbContext db) : Controller
         });
     }
 
+    [Authorize(Roles = "Administrator,Organizer"), HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfigureStartFinish(int eventId)
+    {
+        var race = await db.Events.Include(x => x.Distances).Include(x => x.Checkpoints)
+            .FirstOrDefaultAsync(x => x.Id == eventId);
+        if (race is null) return NotFound();
+
+        var length = race.Distances.OrderByDescending(x => x.Kilometers).FirstOrDefault()?.Kilometers ?? 0m;
+        if (length <= 0)
+        {
+            TempData["Error"] = "Primero configurá una distancia válida para crear la llegada.";
+            return RedirectToAction(nameof(Index), new { eventId });
+        }
+
+        if (!race.Checkpoints.Any(x => x.Type == TimingPointType.Start))
+            db.Checkpoints.Add(new Checkpoint { EventId = eventId, Name = "Salida", Type = TimingPointType.Start, Order = 0, Kilometer = 0m });
+        if (!race.Checkpoints.Any(x => x.Type == TimingPointType.Finish))
+            db.Checkpoints.Add(new Checkpoint { EventId = eventId, Name = "Llegada", Type = TimingPointType.Finish, Order = Math.Max(1, race.Checkpoints.Count), Kilometer = length });
+
+        await db.SaveChangesAsync();
+        TempData["Success"] = "Estaciones de salida y llegada listas para registrar tiempos.";
+        return RedirectToAction(nameof(Index), new { eventId });
+    }
+
     public async Task<IActionResult> CheckIn(int eventId, string? q = null)
     {
         var race = await db.Events.AsNoTracking().FirstOrDefaultAsync(x => x.Id == eventId);
