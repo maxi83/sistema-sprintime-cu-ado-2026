@@ -113,8 +113,8 @@
         button.disabled = false;
       }
     }
-    function showLocal(entry) { lastTime.textContent = new Date(entry.timestampUtc).toLocaleTimeString('es-AR'); lastName.textContent = 'Pendiente de sincronizar'; lastBib.textContent = `#${entry.bibNumber}`; }
-    function showServer(entry, data) { lastTime.textContent = new Date(data.timestamp || entry.timestampUtc).toLocaleTimeString('es-AR'); lastName.textContent = data.name || 'Corredor registrado'; lastBib.textContent = `#${entry.bibNumber}`; }
+    function showLocal(entry) { lastTime.textContent = new Date(entry.timestampUtc).toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }); lastName.textContent = 'Pendiente de sincronizar'; lastBib.textContent = `#${entry.bibNumber}`; }
+    function showServer(entry, data) { lastTime.textContent = new Date(data.timestamp || entry.timestampUtc).toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }); lastName.textContent = data.name || 'Corredor registrado'; lastBib.textContent = `#${entry.bibNumber}`; }
     async function syncQueue() {
       if (!navigator.onLine) { message.textContent = 'Todavía no hay conexión.'; return; }
       const items = queue();
