@@ -1,6 +1,6 @@
 @{ ViewData["Title"]="Ingresar como ciclista"; }
 <section class="auth-wrap"><div class="auth-panel"><h1>Espacio ciclista</h1><p>Ingresá con tu cuenta para ver tus carreras y anotarte en nuevos eventos.</p></div>
-<form asp-action="CyclistLogin" method="post" class="auth-card"><input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl"/><h2>Iniciar sesión</h2>@if(ViewBag.Error is string error){<div class="validation-summary">@error</div>}
+<form asp-action="CyclistLogin" method="post" class="auth-card"><input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl"/><h2>Iniciar sesión</h2>@if(Context.Request.Query["area"] == "cyclist"){<div class="validation-summary" role="status">Para inscribirte necesitás una cuenta de ciclista. Tu acceso de organizador es independiente: podés crear tu perfil abajo o ingresar con una cuenta de corredor que ya exista.</div>}@if(ViewBag.Error is string error){<div class="validation-summary">@error</div>}
 <label class="field"><span>Correo electrónico</span><input type="email" name="email" required autocomplete="username"/></label>
 <label class="field"><span>Contraseña</span><input type="password" name="password" required autocomplete="current-password"/></label>
 <button type="submit" class="btn btn-primary btn-lg btn-block">Entrar</button><p class="auth-register-caption">¿Todavía no tenés cuenta?</p><a class="btn btn-outline btn-lg btn-block auth-register-btn" asp-action="Register" asp-route-returnUrl="@ViewBag.ReturnUrl">Crear mi cuenta de ciclista</a></form></section>
