@@ -35,14 +35,18 @@ public class ResultsController(ApplicationDbContext db, lucho_sprintime.Services
     {
         var race = await db.Events.AsNoTracking().Include(x => x.Distances).ThenInclude(x => x.Categories).FirstOrDefaultAsync(x => x.Slug == slug);
         if (race is null) return NotFound();
+        // Los organizadores pueden revisar resultados provisionales sin publicarlos.
+        // Para el público solo son visibles los resultados oficiales.
+        var organizerPreview = User.IsInRole("Administrator") || User.IsInRole("Organizer");
         IQueryable<Result> query = db.Results.AsNoTracking()
-            .Where(x => x.Registration.EventId == race.Id && x.Status == ResultStatus.Official)
+            .Where(x => x.Registration.EventId == race.Id && (x.Status == ResultStatus.Official || organizerPreview))
             .Include(x => x.Registration).ThenInclude(x => x.Cyclist)
             .Include(x => x.Registration).ThenInclude(x => x.Category)
             .Include(x => x.Registration).ThenInclude(x => x.EventDistance);
         if (!string.IsNullOrWhiteSpace(q)) query = query.Where(x => x.Registration.Cyclist.FirstName.Contains(q) || x.Registration.Cyclist.LastName.Contains(q) || (x.Registration.BibNumber ?? "").Contains(q));
         if (categoryId.HasValue) query = query.Where(x => x.Registration.CategoryId == categoryId.Value);
         ViewBag.Event = race; ViewBag.Query = q; ViewBag.CategoryId = categoryId;
+        ViewBag.OrganizerPreview = organizerPreview;
         return View(await query.OrderBy(x => x.GeneralPosition).ToListAsync());
     }
 
