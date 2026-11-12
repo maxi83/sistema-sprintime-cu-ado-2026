@@ -23,10 +23,27 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Events.OnRedirectToLogin = context =>
         {
-            var target = context.Request.Path.StartsWithSegments("/Registration") ||
-                context.Request.Path.StartsWithSegments("/Cyclist")
-                ? "/Account/CyclistLogin" : "/Account/Login";
+            var isCyclistArea = context.Request.Path.StartsWithSegments("/Registration") ||
+                context.Request.Path.StartsWithSegments("/Cyclist");
+            var target = isCyclistArea ? "/Account/CyclistLogin" : "/Account/Login";
             context.Response.Redirect(target + "?returnUrl=" + Uri.EscapeDataString(context.Request.Path + context.Request.QueryString));
+            return Task.CompletedTask;
+        };
+        // Un organizador autenticado no debe recibir "Acceso denegado" al intentar
+        // inscribir un corredor: se le ofrece ingresar o crear una cuenta de ciclista.
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            var isCyclistArea = context.Request.Path.StartsWithSegments("/Registration") ||
+                context.Request.Path.StartsWithSegments("/Cyclist");
+            if (isCyclistArea)
+            {
+                var returnUrl = Uri.EscapeDataString(context.Request.Path + context.Request.QueryString);
+                context.Response.Redirect("/Account/CyclistLogin?returnUrl=" + returnUrl + "&area=cyclist");
+            }
+            else
+            {
+                context.Response.Redirect("/Account/AccessDenied");
+            }
             return Task.CompletedTask;
         };
     });
