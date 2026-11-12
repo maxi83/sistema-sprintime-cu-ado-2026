@@ -29,8 +29,9 @@ public class EventsController(ApplicationDbContext db) : Controller
             .Include(x => x.Sponsors)
             .Include(x => x.Checkpoints)
             .Include(x => x.Registrations.Where(r => r.Status == RegistrationStatus.Confirmed)).ThenInclude(x => x.Cyclist)
-            .FirstOrDefaultAsync(x => x.Slug == slug && x.Status != EventStatus.Draft && x.Slug != "desafio-mtb-potrero-2026" && x.Slug != "rally-bike-la-florida-2026");
+            .FirstOrDefaultAsync(x => x.Slug == slug && (x.Status != EventStatus.Draft || User.IsInRole("Administrator") || User.IsInRole("Organizer")) && x.Slug != "desafio-mtb-potrero-2026" && x.Slug != "rally-bike-la-florida-2026");
         if (race is null) return NotFound();
+        ViewBag.IsDraftPreview = race.Status == EventStatus.Draft;
         ViewBag.HasOfficialResults = await db.Results.AnyAsync(x => x.Registration.EventId == race.Id && x.Status == ResultStatus.Official);
         return View(race);
     }
