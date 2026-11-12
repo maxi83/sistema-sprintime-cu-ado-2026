@@ -68,7 +68,11 @@ public class ResultsController(ApplicationDbContext db, lucho_sprintime.Services
             .Include(x => x.Registration).ThenInclude(x => x.Category)
             .Include(x => x.Registration).ThenInclude(x => x.EventDistance)
             .FirstOrDefaultAsync(x => x.Id == id);
-        return result is null ? NotFound() : View(result);
+        if (result is null) return NotFound();
+        if (result.Status != ResultStatus.Official &&
+            !User.IsInRole("Administrator") && !User.IsInRole("Organizer"))
+            return NotFound();
+        return View(result);
     }
 
     [HttpGet("diploma/{id:int}.pdf")]
