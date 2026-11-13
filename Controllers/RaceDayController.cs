@@ -20,7 +20,7 @@ public class RaceDayController(ApplicationDbContext db) : Controller
             Event = race,
             Confirmed = await regs.CountAsync(),
             Accredited = await regs.CountAsync(x => x.CheckInStatus != CheckInStatus.Pending),
-            Started = await regs.CountAsync(x => x.CheckInStatus == CheckInStatus.Started || x.CheckInStatus == CheckInStatus.Finished),
+            Started = await regs.CountAsync(x => x.CheckInStatus == CheckInStatus.Started),
             Finished = await regs.CountAsync(x => x.CheckInStatus == CheckInStatus.Finished),
             Checkpoints = race.Checkpoints.OrderBy(x => x.Order).ToList(),
             Recent = await regs.Include(x => x.Cyclist).Include(x => x.Category).OrderByDescending(x => x.CheckedInAt).Take(8).ToListAsync()
