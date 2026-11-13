@@ -19,7 +19,7 @@
         <div class="shell nav-shell">
             <a class="brand" asp-controller="Home" asp-action="Index" aria-label="SprinTime inicio">
                 <span class="brand-mark">ST</span>
-                <span class="brand-copy"><strong>SprinTime</strong><small>Race timing · Cycling platform</small></span>
+                <span class="brand-copy"><strong>SprinTime</strong><small>Cronometraje · Plataforma de ciclismo</small></span>
             </a>
             <button class="nav-toggle" type="button" data-nav-toggle aria-label="Abrir menú"><span></span><span></span><span></span></button>
             <nav class="main-nav" data-nav>
@@ -35,7 +35,7 @@
                 }
                 @if (User.IsInRole("Administrator") || User.IsInRole("Organizer"))
                 {
-                    <a class="nav-admin" asp-controller="Admin" asp-action="Dashboard">Control Center</a>
+                    <a class="nav-admin" asp-controller="Admin" asp-action="Dashboard">Panel del organizador</a>
                 }
                 else
                 {
@@ -54,7 +54,7 @@
         <div class="shell footer-grid">
             <div>
                 <a class="brand brand-footer" asp-controller="Home" asp-action="Index"><span class="brand-mark">ST</span><span class="brand-copy"><strong>SprinTime</strong><small>Viví la carrera. Superá tu tiempo.</small></span></a>
-                <p>Gestión de eventos, inscripción, operación Race Day y resultados conectados en una sola experiencia.</p>
+                <p>Gestión de eventos, inscripción, operación del día de carrera y resultados conectados en una sola experiencia.</p>
             </div>
             <div class="footer-links">
                 <a asp-controller="Events" asp-action="Index">Próximas carreras</a>
