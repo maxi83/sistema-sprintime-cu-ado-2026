@@ -6,6 +6,7 @@ namespace lucho_sprintime.Data;
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
     public DbSet<HistoricPodium> HistoricPodiums => Set<HistoricPodium>();
+    public DbSet<ManualPodium> ManualPodiums => Set<ManualPodium>();
     public DbSet<SocialLinks> SocialLinks => Set<SocialLinks>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventDistance> EventDistances => Set<EventDistance>();
@@ -25,6 +26,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         modelBuilder.Entity<SocialLinks>().Property(x => x.Id).ValueGeneratedNever();
         modelBuilder.Entity<Event>().HasIndex(x => x.Slug).IsUnique();
         modelBuilder.Entity<HistoricPodium>().HasIndex(x => new { x.EventId, x.Category, x.Place }).IsUnique();
+        modelBuilder.Entity<ManualPodium>().HasIndex(x => new { x.EventId, x.CategoryId, x.Place }).IsUnique();
+        modelBuilder.Entity<ManualPodium>().HasIndex(x => new { x.EventId, x.RegistrationId }).IsUnique();
         modelBuilder.Entity<Cyclist>().HasIndex(x => x.Dni).IsUnique();
         modelBuilder.Entity<Cyclist>().HasIndex(x => x.Email);
         modelBuilder.Entity<Cyclist>().HasIndex(x => x.SprintimeBib).IsUnique().HasFilter("[SprintimeBib] IS NOT NULL");
