@@ -18,6 +18,7 @@ public class EventEditViewModel
     [MaxLength(2400)] public string Description { get; set; } = "";
     [MaxLength(500)] public string? HeroImageUrl { get; set; }
     public IFormFile? HeroImageFile { get; set; }
+    public bool RemoveHeroImage { get; set; }
     [MaxLength(500)] public string? RegulationUrl { get; set; }
     [MaxLength(500)] public string? GpxUrl { get; set; }
     [MaxLength(500), Display(Name = "Enlace al álbum de Google Drive")]
