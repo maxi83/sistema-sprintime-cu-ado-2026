@@ -8,6 +8,23 @@ namespace lucho_sprintime.Controllers;
 
 public class CyclistController(ApplicationDbContext db) : Controller
 {
+    [Authorize(Roles = "Cyclist"), HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateGender(string? gender)
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var cyclistId)) return Challenge();
+        if (gender is not ("Masculino" or "Femenino"))
+        {
+            TempData["Error"] = "Seleccioná una opción válida para la categoría de competencia.";
+            return RedirectToAction(nameof(Profile));
+        }
+        var cyclist = await db.Cyclists.FirstOrDefaultAsync(x => x.Id == cyclistId);
+        if (cyclist is null) return NotFound();
+        cyclist.Gender = gender;
+        await db.SaveChangesAsync();
+        TempData["Success"] = "Dato actualizado para asignar tu categoría.";
+        return RedirectToAction(nameof(Profile));
+    }
+
 
     [Authorize(Roles = "Cyclist"), HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> SetBib(string bibNumber)
