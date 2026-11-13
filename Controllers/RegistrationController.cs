@@ -20,7 +20,11 @@ public class RegistrationController(ApplicationDbContext db, IMercadoPagoService
         ViewBag.Event = race;
         var cyclist = await CurrentCyclist();
         if (cyclist is null) return Challenge();
-        return View(new RegistrationInputModel { EventId = eventId, EventDistanceId = distanceId ?? race.Distances.FirstOrDefault()?.Id ?? 0,
+        ConfigureAllowedCategories(race, cyclist);
+        var selectedDistance = distanceId ?? race.Distances.FirstOrDefault()?.Id ?? 0;
+        var initialCategory = race.Distances.FirstOrDefault(d => d.Id == selectedDistance)?.Categories
+            .FirstOrDefault(c => AllowedCategories(race, cyclist, selectedDistance).Contains(c.Id) && !c.IsSelectableByCyclist);
+        return View(new RegistrationInputModel { EventId = eventId, CategoryId = initialCategory?.Id ?? 0, EventDistanceId = selectedDistance,
             FirstName = cyclist.FirstName, LastName = cyclist.LastName, Dni = cyclist.Dni, Email = cyclist.Email,
             Phone = cyclist.Phone, BirthDate = cyclist.BirthDate, City = cyclist.City, Team = cyclist.Team,
             EmergencyContact = cyclist.EmergencyContact, EmergencyPhone = cyclist.EmergencyPhone });
@@ -46,6 +50,9 @@ public class RegistrationController(ApplicationDbContext db, IMercadoPagoService
         var category = distance?.Categories.FirstOrDefault(x => x.Id == model.CategoryId);
         if (distance is null) ModelState.AddModelError(nameof(model.EventDistanceId), "La distancia no corresponde a esta carrera.");
         if (category is null) ModelState.AddModelError(nameof(model.CategoryId), "La categoría no corresponde a la distancia elegida.");
+        else if (!AllowedCategories(race, cyclist, model.EventDistanceId).Contains(category.Id))
+            ModelState.AddModelError(nameof(model.CategoryId), "La categoría no corresponde a tu edad y sexo para el día de la carrera.");
+        ConfigureAllowedCategories(race, cyclist);
         if (distance?.MaxParticipants is int max)
         {
             var count = await db.Registrations.CountAsync(x => x.EventDistanceId == distance.Id && x.Status != RegistrationStatus.Cancelled && x.Status != RegistrationStatus.Refunded);
@@ -138,6 +145,31 @@ public class RegistrationController(ApplicationDbContext db, IMercadoPagoService
         var registration = await db.Registrations.AsNoTracking().Include(x => x.Event).Include(x => x.EventDistance).Include(x => x.Category).Include(x => x.Cyclist).FirstOrDefaultAsync(x => x.Id == id);
         if (registration is null || !CanAccess(registration.CyclistId) || registration.PaymentStatus != PaymentStatus.Approved) return NotFound();
         return View(registration);
+    }
+
+    private static HashSet<int> AllowedCategories(Event race, Cyclist cyclist, int distanceId)
+    {
+        var distance = race.Distances.FirstOrDefault(d => d.Id == distanceId);
+        if (distance is null) return [];
+        var day = race.StartDate.Date;
+        var age = day.Year - cyclist.BirthDate.Year;
+        if (cyclist.BirthDate.Date > day.AddYears(-age)) age--;
+        if (age < 0 || string.IsNullOrWhiteSpace(cyclist.Gender)) return [];
+        var hasRules = distance.Categories.Any(c => c.IsSelectableByCyclist || c.MinAge.HasValue ||
+            c.MaxAge.HasValue || c.Gender != "Mixto");
+        return distance.Categories.Where(c =>
+            (!hasRules || c.IsSelectableByCyclist || c.MinAge.HasValue || c.MaxAge.HasValue || c.Gender != "Mixto") &&
+            (c.Gender == "Mixto" || c.Gender == cyclist.Gender) &&
+            (c.IsSelectableByCyclist ||
+                ((!c.MinAge.HasValue || age >= c.MinAge) && (!c.MaxAge.HasValue || age <= c.MaxAge))))
+            .Select(c => c.Id).ToHashSet();
+    }
+
+    private void ConfigureAllowedCategories(Event race, Cyclist cyclist)
+    {
+        ViewBag.AllowedCategories = race.Distances.SelectMany(d => AllowedCategories(race, cyclist, d.Id))
+            .ToHashSet();
+        ViewBag.CategoryGenderMissing = string.IsNullOrWhiteSpace(cyclist.Gender);
     }
 
     private async Task<Cyclist?> CurrentCyclist()
