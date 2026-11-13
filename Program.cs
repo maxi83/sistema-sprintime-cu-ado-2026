@@ -103,6 +103,29 @@ using (var scope = app.Services.CreateScope())
            ALTER TABLE dbo.Categories ADD IsSelectableByCyclist bit NOT NULL
              CONSTRAINT DF_Categories_IsSelectableByCyclist DEFAULT 0;
         """);
+    // Tabla independiente para resultados manuales: no sobrescribir tiempos tomados con Race Day.
+    await db.Database.ExecuteSqlRawAsync("""
+        IF OBJECT_ID(N'dbo.ManualPodiums', N'U') IS NULL
+        BEGIN
+            CREATE TABLE dbo.ManualPodiums (
+                Id int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                EventId int NOT NULL,
+                CategoryId int NOT NULL,
+                RegistrationId int NOT NULL,
+                Place int NOT NULL,
+                IsPublished bit NOT NULL CONSTRAINT DF_ManualPodiums_IsPublished DEFAULT 0,
+                PublishedAt datetime2 NULL,
+                CONSTRAINT FK_ManualPodiums_Events FOREIGN KEY (EventId) REFERENCES dbo.Events(Id),
+                CONSTRAINT FK_ManualPodiums_Categories FOREIGN KEY (CategoryId) REFERENCES dbo.Categories(Id),
+                CONSTRAINT FK_ManualPodiums_Registrations FOREIGN KEY (RegistrationId) REFERENCES dbo.Registrations(Id),
+                CONSTRAINT CK_ManualPodiums_Place CHECK (Place BETWEEN 1 AND 5)
+            );
+            CREATE UNIQUE INDEX IX_ManualPodiums_EventId_CategoryId_Place
+                ON dbo.ManualPodiums(EventId, CategoryId, Place);
+            CREATE UNIQUE INDEX IX_ManualPodiums_EventId_RegistrationId
+                ON dbo.ManualPodiums(EventId, RegistrationId);
+        END
+        """);
     // Run in a separate SQL batch: SQL Server compiles CREATE INDEX only after the new column exists.
     await db.Database.ExecuteSqlRawAsync("""
         IF OBJECT_ID(N'dbo.Cyclists', N'U') IS NOT NULL
