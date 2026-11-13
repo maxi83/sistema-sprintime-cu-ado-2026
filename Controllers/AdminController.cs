@@ -213,12 +213,15 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
             var distance = input.Id.HasValue ? race.Distances.FirstOrDefault(x => x.Id == input.Id.Value) : null;
             if (distance is null) { distance = new EventDistance(); race.Distances.Add(distance); }
             distance.Name = input.Name.Trim(); distance.Kilometers = input.Kilometers; distance.Price = input.Price; distance.MaxParticipants = input.MaxParticipants;
-            var names = input.Categories.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            foreach (var old in distance.Categories.Where(x => !names.Contains(x.Name, StringComparer.OrdinalIgnoreCase)).ToList())
+            // Las categorías de distancias existentes se administran en la pantalla de reglas;
+            // guardar el resto del evento nunca debe borrarlas ni modificar sus rangos.
+            if (!input.Id.HasValue)
             {
-                if (!await db.Registrations.AnyAsync(x => x.CategoryId == old.Id)) db.Categories.Remove(old);
+                var names = (input.Categories ?? "").Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                foreach (var name in names)
+                    distance.Categories.Add(new Category { Name = name, Gender = "Mixto" });
             }
-            foreach (var name in names.Where(name => !distance.Categories.Any(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))) distance.Categories.Add(new Category { Name = name, Gender = "Mixto" });
         }
         await db.SaveChangesAsync();
         TempData["Success"] = "Carrera guardada.";
