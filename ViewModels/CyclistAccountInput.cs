@@ -8,6 +8,7 @@ public class CyclistAccountInput
  [Required,EmailAddress,MaxLength(160)] public string Email {get;set;}="";
  [Required,MinLength(10),MaxLength(100),DataType(DataType.Password)] public string Password {get;set;}="";
  [Required,DataType(DataType.Date)] public DateTime? BirthDate {get;set;}
+ [Required(ErrorMessage="Seleccioná el sexo para asignar correctamente la categoría."), RegularExpression("^(Masculino|Femenino)$",ErrorMessage="Seleccioná una opción válida.")] public string? Gender {get;set;}
  [Required,MaxLength(40)] public string Phone {get;set;}="";
  [MaxLength(100)] public string City {get;set;}="";
  [MaxLength(120)] public string Team {get;set;}="";
