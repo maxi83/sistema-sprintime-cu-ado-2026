@@ -28,7 +28,7 @@
                         </select>
                     </label>
                     <label class="field"><span>Puesto</span><select name="place" required>
-                        @for(var i=1;i<=5;i++){<option value="@i">@i.º puesto</option>}
+                        @for(var i=1;i<=5;i++){<option value="@i">@(i).º puesto</option>}
                     </select></label>
                     <label class="field"><span>Número de dorsal</span><input name="bibNumber" type="number" min="1" max="200" required placeholder="Ej.: 102" /></label>
                 </div>
