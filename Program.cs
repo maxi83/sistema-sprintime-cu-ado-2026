@@ -94,6 +94,7 @@ using (var scope = app.Services.CreateScope())
             IF COL_LENGTH('dbo.Cyclists', 'MedicalNotes') IS NULL ALTER TABLE dbo.Cyclists ADD MedicalNotes nvarchar(1000) NULL;
             IF COL_LENGTH('dbo.Cyclists', 'MedicalConsent') IS NULL ALTER TABLE dbo.Cyclists ADD MedicalConsent bit NOT NULL CONSTRAINT DF_Cyclists_MedicalConsent DEFAULT 0;
             IF COL_LENGTH('dbo.Cyclists', 'SprintimeBib') IS NULL ALTER TABLE dbo.Cyclists ADD SprintimeBib nvarchar(20) NULL;
+            IF COL_LENGTH('dbo.Cyclists', 'Gender') IS NULL ALTER TABLE dbo.Cyclists ADD Gender nvarchar(20) NULL;
         END
         """);
     // Run in a separate SQL batch: SQL Server compiles CREATE INDEX only after the new column exists.
