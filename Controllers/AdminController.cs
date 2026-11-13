@@ -225,6 +225,80 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
         return RedirectToAction(nameof(Dashboard), new { eventId = race.Id });
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Categories(int distanceId)
+    {
+        var distance = await db.EventDistances.Include(x => x.Event).Include(x => x.Categories)
+            .FirstOrDefaultAsync(x => x.Id == distanceId);
+        if (distance is null) return NotFound();
+        distance.Categories = distance.Categories.OrderBy(x => x.MinAge ?? -1).ThenBy(x => x.Name).ToList();
+        return View(distance);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveCategory(int distanceId, int? categoryId, string name, int? minAge, int? maxAge,
+        string gender, bool isSelectableByCyclist)
+    {
+        var distance = await db.EventDistances.Include(x => x.Categories).FirstOrDefaultAsync(x => x.Id == distanceId);
+        if (distance is null) return NotFound();
+        var category = categoryId.HasValue ? distance.Categories.FirstOrDefault(x => x.Id == categoryId.Value) : null;
+        if (categoryId.HasValue && category is null) return NotFound();
+        name = (name ?? "").Trim();
+        if (name.Length is < 1 or > 80 || gender is not ("Masculino" or "Femenino" or "Mixto") ||
+            (minAge.HasValue && (minAge < 0 || minAge > 120)) || (maxAge.HasValue && (maxAge < 0 || maxAge > 120)) ||
+            (minAge.HasValue && maxAge.HasValue && minAge > maxAge) ||
+            distance.Categories.Any(x => x.Id != categoryId && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+        {
+            TempData["Error"] = "Comprobá el nombre, el sexo, las edades y que la categoría no esté repetida.";
+            return RedirectToAction(nameof(Categories), new { distanceId });
+        }
+        if (category is null) { category = new Category(); distance.Categories.Add(category); }
+        category.Name = name; category.MinAge = minAge; category.MaxAge = maxAge; category.Gender = gender;
+        category.IsSelectableByCyclist = isSelectableByCyclist;
+        await db.SaveChangesAsync();
+        TempData["Success"] = "Reglas de la categoría guardadas.";
+        return RedirectToAction(nameof(Categories), new { distanceId });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddFreeRaceCategories(int distanceId)
+    {
+        var distance = await db.EventDistances.Include(x => x.Categories).FirstOrDefaultAsync(x => x.Id == distanceId);
+        if (distance is null) return NotFound();
+        var defaults = new (string Name, int? Min, int? Max, string Gender, bool Choice)[]
+        {
+            ("-40 (Sub-23, Élite, Máster A)", 0, 39, "Masculino", false),
+            ("+40 (Máster B)", 40, 49, "Masculino", false),
+            ("+50 (Máster C)", 50, 59, "Masculino", false),
+            ("+60 (Máster D)", 60, null, "Masculino", false),
+            ("Damas únicas", null, null, "Femenino", false),
+            ("Élite 2 (Promocionales)", null, null, "Masculino", true)
+        };
+        foreach (var preset in defaults)
+            if (!distance.Categories.Any(x => x.Name.Equals(preset.Name, StringComparison.OrdinalIgnoreCase)))
+                distance.Categories.Add(new Category { Name = preset.Name, MinAge = preset.Min,
+                    MaxAge = preset.Max, Gender = preset.Gender, IsSelectableByCyclist = preset.Choice });
+        await db.SaveChangesAsync();
+        TempData["Success"] = "Se agregaron las categorías de carreras libres. No se eliminó ninguna categoría anterior.";
+        return RedirectToAction(nameof(Categories), new { distanceId });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteCategory(int distanceId, int categoryId)
+    {
+        var category = await db.Categories.FirstOrDefaultAsync(x => x.Id == categoryId && x.EventDistanceId == distanceId);
+        if (category is null) return NotFound();
+        if (await db.Registrations.AnyAsync(x => x.CategoryId == categoryId))
+            TempData["Error"] = "No podés eliminar una categoría que ya tiene inscriptos.";
+        else
+        {
+            db.Categories.Remove(category);
+            await db.SaveChangesAsync();
+            TempData["Success"] = "Categoría eliminada.";
+        }
+        return RedirectToAction(nameof(Categories), new { distanceId });
+    }
+
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> CloseRegistration(int eventId)
     {
