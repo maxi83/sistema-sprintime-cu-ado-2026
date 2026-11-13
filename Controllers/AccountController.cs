@@ -66,10 +66,12 @@ public class AccountController(IConfiguration configuration, ApplicationDbContex
         if (await db.Cyclists.AnyAsync(x => x.Email == normalizedEmail || x.Dni == dni))
             ModelState.AddModelError(nameof(model.Email), "Ya existe una cuenta o un corredor con este DNI o correo. Contactá al organizador si necesitás recuperar un perfil anterior.");
         if (!ModelState.IsValid) return View(model);
+        if (model.Gender is not ("Masculino" or "Femenino")) ModelState.AddModelError(nameof(model.Gender), "Seleccioná el sexo para la categoría.");
+        if (!ModelState.IsValid) return View(model);
         var cyclist = new Cyclist
         {
             FirstName = model.FirstName.Trim(), LastName = model.LastName.Trim(), Dni = dni, Email = normalizedEmail,
-            Phone = model.Phone.Trim(), BirthDate = model.BirthDate!.Value, City = model.City.Trim(), Team = model.Team.Trim(),
+            Phone = model.Phone.Trim(), BirthDate = model.BirthDate!.Value, Gender = model.Gender, City = model.City.Trim(), Team = model.Team.Trim(),
             EmergencyContact = model.EmergencyContact.Trim(), EmergencyPhone = model.EmergencyPhone.Trim(),
             SecondEmergencyPhone = model.SecondEmergencyPhone?.Trim(), BloodType = model.BloodType,
             HasInsurance = model.HasInsurance, InsuranceNumber = model.HasInsurance ? model.InsuranceNumber?.Trim() : null,
