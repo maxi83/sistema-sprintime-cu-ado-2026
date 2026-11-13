@@ -15,12 +15,12 @@ public class ResultsController(ApplicationDbContext db, lucho_sprintime.Services
             .Where(x => x.Slug != "desafio-mtb-potrero-2026" && x.Slug != "rally-bike-la-florida-2026")
             .Where(x => (x.Status == EventStatus.Finished || x.StartDate < DateTime.Now)
                 && (db.HistoricPodiums.Any(p => p.EventId == x.Id) ||
-                    db.Results.Any(r => r.Registration.EventId == x.Id && r.Status == ResultStatus.Official)))
+                    db.Results.Any(r => r.Registration.EventId == x.Id && r.Status == ResultStatus.Official) || db.ManualPodiums.Any(p => p.EventId == x.Id && p.IsPublished)))
             .OrderByDescending(x => x.StartDate)
             .FirstOrDefaultAsync();
         if (race is null) return RedirectToAction(nameof(Index));
         var hasOfficialResults = await db.Results.AnyAsync(r =>
-            r.Registration.EventId == race.Id && r.Status == ResultStatus.Official);
+            r.Registration.EventId == race.Id && r.Status == ResultStatus.Official) || await db.ManualPodiums.AnyAsync(p => p.EventId == race.Id && p.IsPublished);
         return hasOfficialResults
             ? RedirectToAction(nameof(Event), new { slug = race.Slug })
             : RedirectToAction("Details", "Events", new { slug = race.Slug });
@@ -28,7 +28,7 @@ public class ResultsController(ApplicationDbContext db, lucho_sprintime.Services
 
     public async Task<IActionResult> Index()
         => View(await db.Events.AsNoTracking().Where(x => x.Slug != "desafio-mtb-potrero-2026" && x.Slug != "rally-bike-la-florida-2026")
-            .Where(x => x.Status == EventStatus.Finished && db.Results.Any(r => r.Registration.EventId == x.Id && r.Status == ResultStatus.Official)).OrderByDescending(x => x.StartDate).ToListAsync());
+            .Where(x => x.Status == EventStatus.Finished && (db.Results.Any(r => r.Registration.EventId == x.Id && r.Status == ResultStatus.Official) || db.ManualPodiums.Any(p => p.EventId == x.Id && p.IsPublished))).OrderByDescending(x => x.StartDate).ToListAsync());
 
     [HttpGet("resultados/{slug}")]
     public async Task<IActionResult> Event(string slug, string? q = null, int? categoryId = null)
@@ -47,6 +47,11 @@ public class ResultsController(ApplicationDbContext db, lucho_sprintime.Services
         if (categoryId.HasValue) query = query.Where(x => x.Registration.CategoryId == categoryId.Value);
         ViewBag.Event = race; ViewBag.Query = q; ViewBag.CategoryId = categoryId;
         ViewBag.OrganizerPreview = organizerPreview;
+        ViewBag.ManualPodiums = await db.ManualPodiums.AsNoTracking()
+            .Where(x => x.EventId == race.Id && (x.IsPublished || organizerPreview))
+            .Include(x => x.Registration).ThenInclude(x => x.Cyclist)
+            .Include(x => x.Category)
+            .OrderBy(x => x.Category.Name).ThenBy(x => x.Place).ToListAsync();
         return View(await query.OrderBy(x => x.GeneralPosition).ToListAsync());
     }
 
