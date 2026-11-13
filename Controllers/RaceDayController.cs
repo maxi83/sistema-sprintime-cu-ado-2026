@@ -71,6 +71,11 @@ public class RaceDayController(ApplicationDbContext db) : Controller
         var reg = await db.Registrations.FirstOrDefaultAsync(x => x.Id == registrationId);
         if (reg is null) return NotFound();
         if (reg.PaymentStatus != PaymentStatus.Approved) { TempData["Error"] = "No se puede acreditar: el pago no está aprobado."; return RedirectToAction(nameof(CheckIn), new { eventId = reg.EventId, q = reg.BibNumber }); }
+        if (reg.CheckInStatus != CheckInStatus.Pending)
+        {
+            TempData["Info"] = "Este corredor ya fue acreditado o tiene un estado de carrera registrado. No se modificó su estado.";
+            return RedirectToAction(nameof(CheckIn), new { eventId = reg.EventId, q = reg.BibNumber });
+        }
         reg.CheckInStatus = CheckInStatus.Accredited; reg.CheckedInAt = DateTime.UtcNow;
         await db.SaveChangesAsync(); TempData["Success"] = "Corredor acreditado.";
         return RedirectToAction(nameof(CheckIn), new { eventId = reg.EventId, q = reg.BibNumber });
