@@ -1,0 +1,83 @@
+@model List<lucho_sprintime.Models.ManualPodium>
+@{
+    var race = (lucho_sprintime.Models.Event)ViewBag.Event;
+    var categories = race.Distances.SelectMany(d => d.Categories.Select(c => new { Category = c, Distance = d })).OrderBy(x => x.Distance.Name).ThenBy(x => x.Category.Name).ToList();
+    var published = Model.Any(x => x.IsPublished);
+    ViewData["Title"] = "Carga de podios · " + race.Name;
+}
+<section class="section"><div class="shell" style="max-width:1040px">
+    <span class="eyebrow">CONTROL CENTER · RESULTADOS</span>
+    <h1>Podios por dorsal</h1>
+    <p><strong>@race.Name</strong> · Ingresá los dorsales del 1.º al 5.º puesto de cada categoría. No es necesario cargar tiempos.</p>
+    <p><a class="btn btn-outline" asp-action="Event" asp-route-slug="@race.Slug">Volver a resultados</a></p>
+    <div class="admin-card" style="padding:22px;margin:20px 0">
+        <h2>@(published ? "Podios publicados" : "Cargar o corregir puestos")</h2>
+        <p>@(published ? "Los puestos están publicados. Para cambiarlos se requiere un proceso de rectificación." : "Estos datos son un borrador privado hasta que confirmes la publicación. Para cambiar un puesto, volvé a ingresar su dorsal.")</p>
+        @if (!published)
+        {
+            <form asp-action="SaveManualPodium" method="post">
+                <input type="hidden" name="eventId" value="@race.Id" />
+                <div class="field-grid">
+                    <label class="field span-2"><span>Categoría y recorrido</span>
+                        <select name="categoryId" required>
+                            <option value="">Elegí una categoría</option>
+                            @foreach(var item in categories)
+                            {
+                                <option value="@item.Category.Id">@item.Distance.Name · @item.Category.Name</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="field"><span>Puesto</span><select name="place" required>
+                        @for(var i=1;i<=5;i++){<option value="@i">@i.º puesto</option>}
+                    </select></label>
+                    <label class="field"><span>Número de dorsal</span><input name="bibNumber" type="number" min="1" max="200" required placeholder="Ej.: 102" /></label>
+                </div>
+                <button class="btn btn-primary" type="submit">Guardar puesto en borrador</button>
+            </form>
+        }
+    </div>
+    <div class="admin-card" style="padding:22px;margin:20px 0">
+        <h2>Podios cargados (@Model.Count)</h2>
+        @if(Model.Count == 0)
+        {
+            <p>Todavía no se cargaron puestos manuales. La prueba del cronometraje no se modifica.</p>
+        }
+        else
+        {
+            <div class="table-shell"><table class="data-table">
+                <thead><tr><th>Categoría</th><th>Puesto</th><th>Dorsal</th><th>Ciclista</th><th>Estado</th><th></th></tr></thead>
+                <tbody>
+                @foreach(var entry in Model)
+                {
+                    <tr>
+                        <td>@entry.Category.Name</td>
+                        <td>#@entry.Place</td>
+                        <td><span class="bib">@entry.Registration.BibNumber</span></td>
+                        <td>@entry.Registration.Cyclist.FirstName @entry.Registration.Cyclist.LastName</td>
+                        <td>@(entry.IsPublished ? "Publicado" : "Borrador privado")</td>
+                        <td>@if (!entry.IsPublished)
+                        {
+                            <form asp-action="DeleteManualPodium" method="post" onsubmit="return confirm('¿Quitar este puesto del borrador?')">
+                                <input type="hidden" name="eventId" value="@race.Id" />
+                                <input type="hidden" name="id" value="@entry.Id" />
+                                <button type="submit" class="btn btn-outline">Quitar</button>
+                            </form>
+                        }</td>
+                    </tr>
+                }
+                </tbody>
+            </table></div>
+        }
+    </div>
+    @if (!published && Model.Count > 0)
+    {
+        <div class="admin-card" style="padding:22px;margin:20px 0;border:1px solid #d98a3a">
+            <h2>Publicar podios manuales</h2>
+            <p>Esta acción los hará visibles al público y marcará la carrera como finalizada. Revisá categoría, puesto y dorsal antes de continuar.</p>
+            <form asp-action="PublishManualPodiums" method="post" onsubmit="return confirm('¿Confirmás que revisaste todos los puestos por categoría? Se publicarán como oficiales y la carrera quedará finalizada.');">
+                <input type="hidden" name="eventId" value="@race.Id" />
+                <button type="submit" class="btn btn-primary">Publicar podios oficiales</button>
+            </form>
+        </div>
+    }
+</div></section>
