@@ -223,7 +223,7 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
                 await stream.CopyToAsync(output);
             model.HeroImageUrl = "/uploads/events/" + filename;
         }
-        race.HeroImageUrl = model.HeroImageUrl; race.RegulationUrl = model.RegulationUrl; race.GpxUrl = model.GpxUrl; race.ElevationGainMeters = model.ElevationGainMeters; race.Status = model.Status;
+        race.HeroImageUrl = model.RemoveHeroImage && model.HeroImageFile is null ? null : model.HeroImageUrl; race.RegulationUrl = model.RegulationUrl; race.GpxUrl = model.GpxUrl; race.ElevationGainMeters = model.ElevationGainMeters; race.Status = model.Status;
         race.ShowPublicParticipants = model.ShowPublicParticipants; race.AllowOnsiteRegistration = model.AllowOnsiteRegistration;
         race.PhotoAlbumUrl = string.IsNullOrWhiteSpace(model.PhotoAlbumUrl) ? null : model.PhotoAlbumUrl.Trim();
         race.GalleryImageUrls = photos.Length == 0 ? null : string.Join("\n", photos);
