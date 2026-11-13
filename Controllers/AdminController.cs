@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace lucho_sprintime.Controllers;
 
 [Authorize(Roles = "Administrator,Organizer")]
-public class AdminController(ApplicationDbContext db, IExportService exportService) : Controller
+public class AdminController(ApplicationDbContext db, IExportService exportService, IWebHostEnvironment hostEnvironment) : Controller
 {
     [HttpGet]
     public async Task<IActionResult> SocialLinks()
@@ -162,6 +162,14 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
             if (!Uri.TryCreate(photo, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps ||
                 photo.Length > 500 || !new[]{".jpg",".jpeg",".png",".webp"}.Any(ext => uri.AbsolutePath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
                 ModelState.AddModelError(nameof(model.GalleryImageUrls), "Cada foto debe ser una URL HTTPS pública terminada en .jpg, .jpeg, .png o .webp.");
+        if (model.HeroImageFile is { } image)
+        {
+            if (image.Length == 0 || image.Length > 5 * 1024 * 1024)
+                ModelState.AddModelError(nameof(model.HeroImageFile), "La imagen debe pesar como máximo 5 MB.");
+            var ext = Path.GetExtension(image.FileName).ToLowerInvariant();
+            if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+                ModelState.AddModelError(nameof(model.HeroImageFile), "Elegí una imagen JPG, PNG o WebP.");
+        }
         if (!string.IsNullOrWhiteSpace(model.PhotoAlbumUrl) &&
             (!Uri.TryCreate(model.PhotoAlbumUrl, UriKind.Absolute, out var album) ||
              album.Scheme != Uri.UriSchemeHttps || !(album.Host == "drive.google.com" || album.Host == "docs.google.com")))
@@ -193,6 +201,28 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
         }
         race.Name = model.Name.Trim(); race.Slug = model.Slug.Trim().ToLowerInvariant(); race.City = model.City.Trim(); race.Province = model.Province.Trim(); race.Venue = model.Venue.Trim();
         race.StartDate = model.StartDate; race.RegistrationOpenAt = model.RegistrationOpenAt; race.RegistrationCloseAt = model.RegistrationCloseAt; race.Description = model.Description.Trim();
+        if (model.HeroImageFile is { } imageFile)
+        {
+            await using var stream = imageFile.OpenReadStream();
+            var magic = new byte[12];
+            var bytes = await stream.ReadAsync(magic.AsMemory());
+            var jpg = bytes >= 3 && magic[0] == 255 && magic[1] == 216 && magic[2] == 255;
+            var png = bytes >= 8 && magic.AsSpan(0, 8).SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 });
+            var webp = bytes >= 12 && System.Text.Encoding.ASCII.GetString(magic, 0, 4) == "RIFF" && System.Text.Encoding.ASCII.GetString(magic, 8, 4) == "WEBP";
+            var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
+            if (!((ext == ".jpg" || ext == ".jpeg") && jpg) && !(ext == ".png" && png) && !(ext == ".webp" && webp))
+            {
+                ModelState.AddModelError(nameof(model.HeroImageFile), "El archivo no tiene un formato de imagen válido.");
+                return View(model);
+            }
+            var folder = Path.Combine(hostEnvironment.WebRootPath, "uploads", "events");
+            Directory.CreateDirectory(folder);
+            var filename = Guid.NewGuid().ToString("N") + (jpg ? ".jpg" : ext);
+            stream.Position = 0;
+            await using (var output = System.IO.File.Create(Path.Combine(folder, filename)))
+                await stream.CopyToAsync(output);
+            model.HeroImageUrl = "/uploads/events/" + filename;
+        }
         race.HeroImageUrl = model.HeroImageUrl; race.RegulationUrl = model.RegulationUrl; race.GpxUrl = model.GpxUrl; race.ElevationGainMeters = model.ElevationGainMeters; race.Status = model.Status;
         race.ShowPublicParticipants = model.ShowPublicParticipants; race.AllowOnsiteRegistration = model.AllowOnsiteRegistration;
         race.PhotoAlbumUrl = string.IsNullOrWhiteSpace(model.PhotoAlbumUrl) ? null : model.PhotoAlbumUrl.Trim();
