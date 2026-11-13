@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 using lucho_sprintime.Models;
 
 namespace lucho_sprintime.ViewModels;
@@ -16,6 +17,7 @@ public class EventEditViewModel
     [Required] public DateTime RegistrationCloseAt { get; set; }
     [MaxLength(2400)] public string Description { get; set; } = "";
     [MaxLength(500)] public string? HeroImageUrl { get; set; }
+    public IFormFile? HeroImageFile { get; set; }
     [MaxLength(500)] public string? RegulationUrl { get; set; }
     [MaxLength(500)] public string? GpxUrl { get; set; }
     [MaxLength(500), Display(Name = "Enlace al álbum de Google Drive")]
@@ -25,7 +27,7 @@ public class EventEditViewModel
     [MaxLength(6000), Display(Name = "Podios por categoría")]
     public string? PodiumEntries { get; set; }
     public int ElevationGainMeters { get; set; }
-    public EventStatus Status { get; set; } = EventStatus.Published;
+    public EventStatus Status { get; set; } = EventStatus.Draft;
     public bool ShowPublicParticipants { get; set; } = true;
     public bool AllowOnsiteRegistration { get; set; }
     public List<DistanceInput> Distances { get; set; } = [new()];
