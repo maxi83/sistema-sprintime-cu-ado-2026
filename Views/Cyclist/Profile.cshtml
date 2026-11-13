@@ -30,7 +30,18 @@
                 <div><small>CIUDAD</small><strong>@Model.City</strong></div>
                 <div><small>EQUIPO</small><strong>@Model.Team</strong></div>
                 <div><small>FECHA DE NACIMIENTO</small><strong>@Model.BirthDate.ToString("dd/MM/yyyy")</strong></div>
+                <div><small>SEXO PARA CATEGORÍA</small><strong>@(Model.Gender ?? "Pendiente de completar")</strong></div>
             </div>
+            <form asp-controller="Cyclist" asp-action="UpdateGender" method="post" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:22px 0">
+                <label class="field" style="min-width:220px"><span>Sexo para asignar tu categoría</span>
+                    <select name="gender" required>
+                        <option value="">Seleccioná una opción</option>
+                        <option value="Masculino" selected="@(Model.Gender == "Masculino")">Masculino</option>
+                        <option value="Femenino" selected="@(Model.Gender == "Femenino")">Femenino</option>
+                    </select>
+                </label>
+                <button class="btn btn-primary" type="submit">Actualizar dato</button>
+            </form>
             <a class="btn btn-outline" asp-controller="Cyclist" asp-action="Dashboard">Volver a mi temporada</a>
         </div>
     </div>
