@@ -11,6 +11,7 @@ public class Cyclist
     [Required, EmailAddress, MaxLength(160)] public string Email { get; set; } = "";
     [MaxLength(40)] public string Phone { get; set; } = "";
     public DateTime BirthDate { get; set; }
+    [MaxLength(20)] public string? Gender { get; set; }
     [MaxLength(100)] public string City { get; set; } = "";
     [MaxLength(120)] public string Team { get; set; } = "";
     [MaxLength(160)] public string EmergencyContact { get; set; } = "";
