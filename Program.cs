@@ -97,6 +97,12 @@ using (var scope = app.Services.CreateScope())
             IF COL_LENGTH('dbo.Cyclists', 'Gender') IS NULL ALTER TABLE dbo.Cyclists ADD Gender nvarchar(20) NULL;
         END
         """);
+    await db.Database.ExecuteSqlRawAsync("""
+        IF OBJECT_ID(N'dbo.Categories', N'U') IS NOT NULL
+           AND COL_LENGTH('dbo.Categories', 'IsSelectableByCyclist') IS NULL
+           ALTER TABLE dbo.Categories ADD IsSelectableByCyclist bit NOT NULL
+             CONSTRAINT DF_Categories_IsSelectableByCyclist DEFAULT 0;
+        """);
     // Run in a separate SQL batch: SQL Server compiles CREATE INDEX only after the new column exists.
     await db.Database.ExecuteSqlRawAsync("""
         IF OBJECT_ID(N'dbo.Cyclists', N'U') IS NOT NULL
