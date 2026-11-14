@@ -26,6 +26,7 @@ public class ResultsController(ApplicationDbContext db, lucho_sprintime.Services
             : RedirectToAction("Details", "Events", new { slug = race.Slug });
     }
 
+    [HttpGet("resultados")]
     public async Task<IActionResult> Index()
         => View(await db.Events.AsNoTracking().Where(x => x.Slug != "desafio-mtb-potrero-2026" && x.Slug != "rally-bike-la-florida-2026")
             .Where(x => x.Status == EventStatus.Finished && (db.Results.Any(r => r.Registration.EventId == x.Id && r.Status == ResultStatus.Official) || db.ManualPodiums.Any(p => p.EventId == x.Id && p.IsPublished))).OrderByDescending(x => x.StartDate).ToListAsync());
