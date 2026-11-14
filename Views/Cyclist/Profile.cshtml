@@ -1,0 +1,48 @@
+@model lucho_sprintime.Models.Cyclist
+@{
+    ViewData["Title"] = "Mi perfil";
+}
+<section class="section">
+    <div class="shell">
+        <span class="eyebrow">ESPACIO CICLISTA</span>
+        <h1>Mi perfil</h1>
+        <p>Datos registrados en SprinTime.</p>
+        <div class="admin-card" style="max-width:760px;padding:24px;margin-top:24px">
+            <h2>@Model.FirstName @Model.LastName</h2>
+            @{
+                var dorsal = int.TryParse(Model.SprintimeBib, out var bib) ? bib : 0;
+                var color = dorsal == 0 ? "#a3a3a3" : dorsal <= 39 ? "#eab308" : dorsal <= 79 ? "#ef4444" : dorsal <= 119 ? "#3b82f6" : dorsal <= 159 ? "#22c55e" : "#ec4899";
+            }
+            <div style="margin:20px 0;padding:18px;border:2px solid @color;border-radius:14px">
+                <small>DORSAL PERMANENTE SPRINTIME</small>
+                <h2 style="color:@color;margin:8px 0">@(dorsal == 0 ? "Sin asignar" : dorsal.ToString("D3"))</h2>
+                <form asp-controller="Cyclist" asp-action="SetBib" method="post" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                    <label for="bibNumber">Dorsal (1–200)</label>
+                    <input id="bibNumber" type="number" min="1" max="200" required name="bibNumber" value="@(dorsal == 0 ? "" : dorsal.ToString())" style="max-width:120px" />
+                    <button class="btn btn-primary" type="submit">Guardar dorsal</button>
+                </form>
+                <small>1–39 amarillo · 40–79 rojo · 80–119 azul · 120–159 verde · 160–200 rosa. La asignación debe respetar la categoría indicada por el organizador.</small>
+            </div>
+            <div class="status-grid">
+                <div><small>DNI</small><strong>@Model.Dni</strong></div>
+                <div><small>EMAIL</small><strong>@Model.Email</strong></div>
+                <div><small>TELÉFONO</small><strong>@Model.Phone</strong></div>
+                <div><small>CIUDAD</small><strong>@Model.City</strong></div>
+                <div><small>EQUIPO</small><strong>@Model.Team</strong></div>
+                <div><small>FECHA DE NACIMIENTO</small><strong>@Model.BirthDate.ToString("dd/MM/yyyy")</strong></div>
+                <div><small>SEXO PARA CATEGORÍA</small><strong>@(Model.Gender ?? "Pendiente de completar")</strong></div>
+            </div>
+            <form asp-controller="Cyclist" asp-action="UpdateGender" method="post" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:22px 0">
+                <label class="field" style="min-width:220px"><span>Sexo para asignar tu categoría</span>
+                    <select name="gender" required>
+                        <option value="">Seleccioná una opción</option>
+                        <option value="Masculino" selected="@(Model.Gender == "Masculino")">Masculino</option>
+                        <option value="Femenino" selected="@(Model.Gender == "Femenino")">Femenino</option>
+                    </select>
+                </label>
+                <button class="btn btn-primary" type="submit">Actualizar dato</button>
+            </form>
+            <a class="btn btn-outline" asp-controller="Cyclist" asp-action="Dashboard">Volver a mi temporada</a>
+        </div>
+    </div>
+</section>

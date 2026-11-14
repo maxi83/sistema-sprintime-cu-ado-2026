@@ -5,6 +5,9 @@ namespace lucho_sprintime.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
+    public DbSet<HistoricPodium> HistoricPodiums => Set<HistoricPodium>();
+    public DbSet<ManualPodium> ManualPodiums => Set<ManualPodium>();
+    public DbSet<SocialLinks> SocialLinks => Set<SocialLinks>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventDistance> EventDistances => Set<EventDistance>();
     public DbSet<Category> Categories => Set<Category>();
@@ -19,9 +22,15 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // This singleton configuration table uses a fixed key (Id = 1), not SQL IDENTITY.
+        modelBuilder.Entity<SocialLinks>().Property(x => x.Id).ValueGeneratedNever();
         modelBuilder.Entity<Event>().HasIndex(x => x.Slug).IsUnique();
+        modelBuilder.Entity<HistoricPodium>().HasIndex(x => new { x.EventId, x.Category, x.Place }).IsUnique();
+        modelBuilder.Entity<ManualPodium>().HasIndex(x => new { x.EventId, x.CategoryId, x.Place }).IsUnique();
+        modelBuilder.Entity<ManualPodium>().HasIndex(x => new { x.EventId, x.RegistrationId }).IsUnique();
         modelBuilder.Entity<Cyclist>().HasIndex(x => x.Dni).IsUnique();
         modelBuilder.Entity<Cyclist>().HasIndex(x => x.Email);
+        modelBuilder.Entity<Cyclist>().HasIndex(x => x.SprintimeBib).IsUnique().HasFilter("[SprintimeBib] IS NOT NULL");
         modelBuilder.Entity<Registration>().HasIndex(x => new { x.EventId, x.CyclistId }).IsUnique();
         modelBuilder.Entity<Registration>().HasIndex(x => x.QrToken).IsUnique();
         modelBuilder.Entity<Registration>().HasIndex(x => new { x.EventId, x.BibNumber }).IsUnique().HasFilter("[BibNumber] IS NOT NULL");

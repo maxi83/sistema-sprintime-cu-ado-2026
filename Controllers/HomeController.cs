@@ -12,7 +12,8 @@ public class HomeController(ApplicationDbContext db, ILogger<HomeController> log
     public async Task<IActionResult> Index()
     {
         var now = DateTime.Now;
-        var events = await db.Events.AsNoTracking().Include(x => x.Distances).OrderBy(x => x.StartDate).ToListAsync();
+        var events = await db.Events.AsNoTracking().Include(x => x.Distances).Where(x =>
+            x.Slug != "desafio-mtb-potrero-2026" && x.Slug != "rally-bike-la-florida-2026").OrderBy(x => x.StartDate).ToListAsync();
         var model = new HomeViewModel
         {
             FeaturedEvent = events.FirstOrDefault(x => x.StartDate >= now && x.Status != EventStatus.Draft),

@@ -1,3 +1,8 @@
+@inject lucho_sprintime.Data.ApplicationDbContext SiteDb
+@using Microsoft.EntityFrameworkCore
+@{
+    var social = await SiteDb.SocialLinks.AsNoTracking().FirstOrDefaultAsync(x => x.Id == 1);
+}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -14,17 +19,23 @@
         <div class="shell nav-shell">
             <a class="brand" asp-controller="Home" asp-action="Index" aria-label="SprinTime inicio">
                 <span class="brand-mark">ST</span>
-                <span class="brand-copy"><strong>SprinTime</strong><small>Race timing · Cycling platform</small></span>
+                <span class="brand-copy"><strong>SprinTime</strong><small>Cronometraje · Plataforma de ciclismo</small></span>
             </a>
             <button class="nav-toggle" type="button" data-nav-toggle aria-label="Abrir menú"><span></span><span></span><span></span></button>
             <nav class="main-nav" data-nav>
                 <a asp-controller="Events" asp-action="Index">Carreras</a>
-                <a asp-controller="Results" asp-action="Index">Resultados</a>
-                <a asp-controller="Ranking" asp-action="Index">Ranking</a>
-                <a asp-controller="Cyclist" asp-action="Dashboard">Espacio ciclista</a>
+                <a asp-controller="Results" asp-action="Latest">Últimos resultados</a>
+                @if (social?.RankingEnabled == true) { <a asp-controller="Ranking" asp-action="Index">Ranking</a> }
+
+                @if (User.IsInRole("Cyclist")) { <a asp-controller="Cyclist" asp-action="Profile">Mi perfil</a> }
+                else { <a asp-controller="Account" asp-action="CyclistLogin">Espacio ciclista</a> }
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <a class="nav-admin" asp-controller="Admin" asp-action="Dashboard">Control Center</a>
+                    <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline"><button type="submit" class="btn btn-ghost">Salir</button></form>
+                }
+                @if (User.IsInRole("Administrator") || User.IsInRole("Organizer"))
+                {
+                    <a class="nav-admin" asp-controller="Admin" asp-action="Dashboard">Panel del organizador</a>
                 }
                 else
                 {
@@ -43,13 +54,16 @@
         <div class="shell footer-grid">
             <div>
                 <a class="brand brand-footer" asp-controller="Home" asp-action="Index"><span class="brand-mark">ST</span><span class="brand-copy"><strong>SprinTime</strong><small>Viví la carrera. Superá tu tiempo.</small></span></a>
-                <p>Gestión de eventos, inscripción, operación Race Day y resultados conectados en una sola experiencia.</p>
+                <p>Gestión de eventos, inscripción, operación del día de carrera y resultados conectados en una sola experiencia.</p>
             </div>
             <div class="footer-links">
                 <a asp-controller="Events" asp-action="Index">Próximas carreras</a>
                 <a asp-controller="Results" asp-action="Index">Resultados</a>
-                <a asp-controller="Ranking" asp-action="Index">Ranking</a>
+
                 <a asp-controller="Account" asp-action="Login">Administración</a>
+                @if (social?.FacebookEnabled == true && !string.IsNullOrWhiteSpace(social.FacebookUrl)) { <a href="@social.FacebookUrl" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><span class="social-mark social-fb" aria-hidden="true">f</span> Facebook</a> }
+                @if (social?.InstagramEnabled == true && !string.IsNullOrWhiteSpace(social.InstagramUrl)) { <a href="@social.InstagramUrl" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><span class="social-mark social-ig" aria-hidden="true">◎</span> Instagram</a> }
+                @if (social?.WhatsappGroupEnabled == true && !string.IsNullOrWhiteSpace(social.WhatsappGroupUrl)) { <a href="@social.WhatsappGroupUrl" target="_blank" rel="noopener noreferrer" aria-label="Grupo de WhatsApp"><span class="social-mark social-wa" aria-hidden="true">WA</span> Grupo de WhatsApp</a> }
             </div>
             <div class="footer-credit"><span>Diseño y desarrollo</span><a href="https://neomaxweb.online" target="_blank" rel="noreferrer">NeoMax ↗</a><small>© @DateTime.Now.Year SprinTime</small></div>
         </div>

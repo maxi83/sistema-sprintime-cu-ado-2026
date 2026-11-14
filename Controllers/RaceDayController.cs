@@ -20,11 +20,35 @@ public class RaceDayController(ApplicationDbContext db) : Controller
             Event = race,
             Confirmed = await regs.CountAsync(),
             Accredited = await regs.CountAsync(x => x.CheckInStatus != CheckInStatus.Pending),
-            Started = await regs.CountAsync(x => x.CheckInStatus == CheckInStatus.Started || x.CheckInStatus == CheckInStatus.Finished),
+            Started = await regs.CountAsync(x => x.CheckInStatus == CheckInStatus.Started),
             Finished = await regs.CountAsync(x => x.CheckInStatus == CheckInStatus.Finished),
             Checkpoints = race.Checkpoints.OrderBy(x => x.Order).ToList(),
             Recent = await regs.Include(x => x.Cyclist).Include(x => x.Category).OrderByDescending(x => x.CheckedInAt).Take(8).ToListAsync()
         });
+    }
+
+    [Authorize(Roles = "Administrator,Organizer"), HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfigureStartFinish(int eventId)
+    {
+        var race = await db.Events.Include(x => x.Distances).Include(x => x.Checkpoints)
+            .FirstOrDefaultAsync(x => x.Id == eventId);
+        if (race is null) return NotFound();
+
+        var length = race.Distances.OrderByDescending(x => x.Kilometers).FirstOrDefault()?.Kilometers ?? 0m;
+        if (length <= 0)
+        {
+            TempData["Error"] = "Primero configurá una distancia válida para crear la llegada.";
+            return RedirectToAction(nameof(Index), new { eventId });
+        }
+
+        if (!race.Checkpoints.Any(x => x.Type == TimingPointType.Start))
+            db.Checkpoints.Add(new Checkpoint { EventId = eventId, Name = "Salida", Type = TimingPointType.Start, Order = 0, Kilometer = 0m });
+        if (!race.Checkpoints.Any(x => x.Type == TimingPointType.Finish))
+            db.Checkpoints.Add(new Checkpoint { EventId = eventId, Name = "Llegada", Type = TimingPointType.Finish, Order = Math.Max(1, race.Checkpoints.Count), Kilometer = length });
+
+        await db.SaveChangesAsync();
+        TempData["Success"] = "Estaciones de salida y llegada listas para registrar tiempos.";
+        return RedirectToAction(nameof(Index), new { eventId });
     }
 
     public async Task<IActionResult> CheckIn(int eventId, string? q = null)
@@ -34,7 +58,7 @@ public class RaceDayController(ApplicationDbContext db) : Controller
         ViewBag.Event = race; ViewBag.Query = q;
         if (string.IsNullOrWhiteSpace(q)) return View(new List<Registration>());
         q = q.Trim();
-        var matches = await db.Registrations.AsNoTracking().Where(x => x.EventId == eventId && x.PaymentStatus == PaymentStatus.Approved)
+        var matches = await db.Registrations.AsNoTracking().Where(x => x.EventId == eventId)
             .Include(x => x.Cyclist).Include(x => x.Category).Include(x => x.EventDistance)
             .Where(x => x.Cyclist.Dni == q || (x.BibNumber ?? "") == q || x.Cyclist.FirstName.Contains(q) || x.Cyclist.LastName.Contains(q) || x.QrToken.ToString() == q)
             .Take(12).ToListAsync();
@@ -47,6 +71,11 @@ public class RaceDayController(ApplicationDbContext db) : Controller
         var reg = await db.Registrations.FirstOrDefaultAsync(x => x.Id == registrationId);
         if (reg is null) return NotFound();
         if (reg.PaymentStatus != PaymentStatus.Approved) { TempData["Error"] = "No se puede acreditar: el pago no está aprobado."; return RedirectToAction(nameof(CheckIn), new { eventId = reg.EventId, q = reg.BibNumber }); }
+        if (reg.CheckInStatus != CheckInStatus.Pending)
+        {
+            TempData["Info"] = "Este corredor ya fue acreditado o tiene un estado de carrera registrado. No se modificó su estado.";
+            return RedirectToAction(nameof(CheckIn), new { eventId = reg.EventId, q = reg.BibNumber });
+        }
         reg.CheckInStatus = CheckInStatus.Accredited; reg.CheckedInAt = DateTime.UtcNow;
         await db.SaveChangesAsync(); TempData["Success"] = "Corredor acreditado.";
         return RedirectToAction(nameof(CheckIn), new { eventId = reg.EventId, q = reg.BibNumber });

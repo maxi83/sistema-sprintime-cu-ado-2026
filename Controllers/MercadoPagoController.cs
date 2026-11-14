@@ -57,6 +57,12 @@ public class MercadoPagoController(ApplicationDbContext db, IMercadoPagoService 
             "cancelled" => PaymentStatus.Cancelled,
             _ => PaymentStatus.Pending
         };
+        // Jamás confirmar una inscripción con un pago por un importe inferior.
+        if (status == PaymentStatus.Approved && verified.Amount < registration.AmountDue)
+        {
+            logger.LogWarning("Pago insuficiente para inscripción {RegistrationId}.", registrationId);
+            return Ok();
+        }
         registration.PaymentStatus = status;
         registration.PaymentExternalId = verified.ExternalId;
         if (status == PaymentStatus.Approved)

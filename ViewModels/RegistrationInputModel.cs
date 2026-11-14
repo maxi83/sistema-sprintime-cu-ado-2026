@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace lucho_sprintime.ViewModels;
 
-public class RegistrationInputModel
+public class RegistrationInputModel : IValidatableObject
 {
     public int EventId { get; set; }
     [Required(ErrorMessage = "Elegí una distancia.")] public int EventDistanceId { get; set; }
@@ -17,6 +17,11 @@ public class RegistrationInputModel
     [MaxLength(120), Display(Name = "Equipo / club")] public string Team { get; set; } = "";
     [Required, MaxLength(160), Display(Name = "Contacto de emergencia")] public string EmergencyContact { get; set; } = "";
     [Required, MaxLength(40), Display(Name = "Teléfono de emergencia")] public string EmergencyPhone { get; set; } = "";
-    [Range(typeof(bool), "true", "true", ErrorMessage = "Tenés que aceptar el reglamento y la declaración.")]
     public bool AcceptTerms { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (!AcceptTerms)
+            yield return new ValidationResult("Tenés que aceptar el reglamento y la declaración.", new[] { nameof(AcceptTerms) });
+    }
 }

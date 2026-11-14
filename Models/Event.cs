@@ -17,6 +17,9 @@ public class Event
     [MaxLength(500)] public string? HeroImageUrl { get; set; }
     [MaxLength(500)] public string? RegulationUrl { get; set; }
     [MaxLength(500)] public string? GpxUrl { get; set; }
+    [MaxLength(500)] public string? PhotoAlbumUrl { get; set; }
+    [MaxLength(4000)] public string? GalleryImageUrls { get; set; }
+    public List<HistoricPodium> HistoricPodiums { get; set; } = [];
     public int ElevationGainMeters { get; set; }
     public EventStatus Status { get; set; } = EventStatus.Draft;
     public bool ShowPublicParticipants { get; set; } = true;
