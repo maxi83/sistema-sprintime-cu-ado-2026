@@ -1,0 +1,14 @@
+@model CommunitySponsorInput
+@{ ViewData["Title"] = Model.Id.HasValue ? "Editar auspiciante" : "Nuevo auspiciante"; ViewData["BodyClass"] = "admin-page"; }
+<section class="section form-section"><div class="shell narrow"><a class="back-link" asp-action="ManageSponsors">← Administrar auspiciantes</a><h1>@ViewData["Title"]</h1>
+<form asp-action="EditSponsor" method="post" enctype="multipart/form-data" class="premium-form"><input type="hidden" asp-for="Id"/><div asp-validation-summary="All" class="validation-summary"></div>
+<div class="form-card"><div class="field-grid">
+<label class="field span-2"><span>Nombre del negocio o marca</span><input asp-for="Name" required maxlength="120"/></label>
+<label class="field span-2"><span>Descripción breve</span><textarea asp-for="Description" rows="4" maxlength="600"></textarea></label>
+<label class="field span-2"><span>Enlace del auspiciante (https://...)</span><input asp-for="LinkUrl" type="url" placeholder="https://..." /></label>
+<label class="field span-2"><span>Logo (JPG, PNG o WebP, máximo 5 MB)</span><input asp-for="LogoFile" type="file" accept=".jpg,.jpeg,.png,.webp"/></label>
+@if (!string.IsNullOrWhiteSpace(Model.LogoUrl)) { <div class="span-2"><img src="@Model.LogoUrl" alt="Logo actual" style="max-width:200px;max-height:160px;object-fit:contain"/><label class="check-field"><input asp-for="RemoveLogo"/> Quitar logo actual</label></div> }
+<label class="field"><span>Orden de aparición</span><input asp-for="DisplayOrder" type="number"/></label>
+</div><label class="check-field"><input asp-for="IsPublished"/> Mostrar en la página de auspiciantes</label></div>
+<button type="submit" class="btn btn-primary btn-lg">Guardar auspiciante →</button>
+</form></div></section><partial name="_ValidationScriptsPartial" />
