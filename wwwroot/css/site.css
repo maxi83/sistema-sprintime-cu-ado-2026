@@ -71,3 +71,12 @@
 .auth-card .auth-register-btn{min-height:56px;font-size:1rem;font-weight:900;background:#fff;border:2px solid #dc5c00;color:#a94300;text-align:center}
 .auth-card .auth-register-btn:hover{background:#fff1e5;color:#873900;border-color:#a94300}
 .validation-summary-valid,.validation-summary:empty{display:none}
+
+/* Comunidad: novedades y auspiciantes */
+.community-grid,.sponsor-community-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:24px;margin-top:30px}
+.community-card,.sponsor-community-card{background:#fff;border:1px solid #e4e7e9;border-radius:20px;overflow:hidden;box-shadow:0 15px 35px rgba(10,20,30,.06)}
+.community-card img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block}
+.community-content{padding:24px}.community-content small{font-size:.78rem;color:#77818b}.community-content h2{font-size:1.4rem;margin:9px 0}.community-content h2 a{color:inherit;text-decoration:none}.community-content p{color:#65737a;line-height:1.6;white-space:pre-line;overflow-wrap:anywhere}
+.community-article{margin-top:28px;max-width:860px}.community-article h1{font-size:clamp(2.3rem,6vw,4rem);line-height:1.1;margin:14px 0 28px}.community-article-image{width:100%;border-radius:20px;max-height:520px;object-fit:contain;background:#f4f5f6}.community-article-text{white-space:pre-line;overflow-wrap:anywhere;line-height:1.85;margin-top:24px;font-size:1.06rem}
+.sponsor-community-card{text-align:center;padding:26px}.sponsor-community-card img{width:100%;height:190px;object-fit:contain;display:block;margin-bottom:14px}.sponsor-community-card h2{font-size:1.25rem;margin:12px 0}.sponsor-community-card p{color:#68757b;line-height:1.6;white-space:pre-line;overflow-wrap:anywhere}.sponsor-placeholder{width:100%;height:190px;border-radius:12px;background:#f2f4f6;color:#a1a9ad;display:grid;place-items:center;font-size:3rem;font-weight:900}
+@media(max-width:680px){.community-grid,.sponsor-community-grid{grid-template-columns:1fr}.sponsor-community-card img{height:160px}}
