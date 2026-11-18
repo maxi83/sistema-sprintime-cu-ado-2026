@@ -180,7 +180,7 @@ using (var scope = app.Services.CreateScope())
             CREATE TABLE dbo.NewsPosts (
                 Id int IDENTITY(1,1) NOT NULL PRIMARY KEY,
                 Title nvarchar(160) NOT NULL,
-                Body nvarchar(6000) NOT NULL,
+                Body nvarchar(max) NOT NULL,
                 ImageUrl nvarchar(500) NULL,
                 IsPublished bit NOT NULL,
                 CreatedAt datetime2 NOT NULL,
