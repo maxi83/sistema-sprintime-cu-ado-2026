@@ -9,4 +9,5 @@
 @if (!string.IsNullOrWhiteSpace(Model.ImageUrl)) { <div class="span-2"><img src="@Model.ImageUrl" alt="Imagen actual" style="max-width:240px;max-height:180px;object-fit:contain"/><label class="check-field"><input asp-for="RemoveImage"/> Quitar imagen actual</label></div> }
 </div><label class="check-field"><input asp-for="IsPublished"/> Publicar ahora (si no se marca, queda en borrador)</label></div>
 <button type="submit" class="btn btn-primary btn-lg">Guardar novedad →</button>
-</form></div></section>@section Scripts { <partial name="_ValidationScriptsPartial" /> }
+</form></div></section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
