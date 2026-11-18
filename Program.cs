@@ -173,6 +173,33 @@ using (var scope = app.Services.CreateScope())
             ON dbo.HistoricPodiums(EventId, Category, Place);
         END
         """);
+    // Nuevas tablas de contenido: creación no destructiva y compatible con bases existentes.
+    await db.Database.ExecuteSqlRawAsync("""
+        IF OBJECT_ID(N'dbo.NewsPosts', N'U') IS NULL
+        BEGIN
+            CREATE TABLE dbo.NewsPosts (
+                Id int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                Title nvarchar(160) NOT NULL,
+                Body nvarchar(6000) NOT NULL,
+                ImageUrl nvarchar(500) NULL,
+                IsPublished bit NOT NULL,
+                CreatedAt datetime2 NOT NULL,
+                UpdatedAt datetime2 NOT NULL
+            );
+        END
+        IF OBJECT_ID(N'dbo.CommunitySponsors', N'U') IS NULL
+        BEGIN
+            CREATE TABLE dbo.CommunitySponsors (
+                Id int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                Name nvarchar(120) NOT NULL,
+                Description nvarchar(600) NULL,
+                LogoUrl nvarchar(500) NULL,
+                LinkUrl nvarchar(500) NULL,
+                DisplayOrder int NOT NULL,
+                IsPublished bit NOT NULL
+            );
+        END
+        """);
     await SeedData.InitializeAsync(db);
 }
 
