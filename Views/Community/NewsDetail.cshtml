@@ -1,0 +1,7 @@
+@model NewsPost
+@{ ViewData["Title"] = Model.Title; }
+<section class="section"><div class="shell narrow"><a class="back-link" asp-action="News">← Volver a novedades</a>
+<article class="community-article"><span class="eyebrow">@Model.CreatedAt.ToString("dd/MM/yyyy") · NOVEDADES</span><h1>@Model.Title</h1>
+@if (!string.IsNullOrWhiteSpace(Model.ImageUrl)) { <img class="community-article-image" src="@Model.ImageUrl" alt="Imagen de @Model.Title"/> }
+<div class="community-article-text">@Model.Body</div></article>
+</div></section>
