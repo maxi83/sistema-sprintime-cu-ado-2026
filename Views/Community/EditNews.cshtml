@@ -1,0 +1,12 @@
+@model NewsPostInput
+@{ ViewData["Title"] = Model.Id.HasValue ? "Editar novedad" : "Nueva novedad"; ViewData["BodyClass"] = "admin-page"; }
+<section class="section form-section"><div class="shell narrow"><a class="back-link" asp-action="ManageNews">← Administrar novedades</a><h1>@ViewData["Title"]</h1>
+<form asp-action="EditNews" method="post" enctype="multipart/form-data" class="premium-form"><input type="hidden" asp-for="Id"/><div asp-validation-summary="All" class="validation-summary"></div>
+<div class="form-card"><div class="field-grid">
+<label class="field span-2"><span>Título de la novedad</span><input asp-for="Title" maxlength="160" required/></label>
+<label class="field span-2"><span>Texto de la publicación</span><textarea asp-for="Body" rows="10" maxlength="6000" required></textarea><small>Escribí la noticia, presentación del equipo o información de la carrera.</small></label>
+<label class="field span-2"><span>Imagen principal (JPG, PNG o WebP, máximo 5 MB)</span><input asp-for="ImageFile" type="file" accept=".jpg,.jpeg,.png,.webp"/></label>
+@if (!string.IsNullOrWhiteSpace(Model.ImageUrl)) { <div class="span-2"><img src="@Model.ImageUrl" alt="Imagen actual" style="max-width:240px;max-height:180px;object-fit:contain"/><label class="check-field"><input asp-for="RemoveImage"/> Quitar imagen actual</label></div> }
+</div><label class="check-field"><input asp-for="IsPublished"/> Publicar ahora (si no se marca, queda en borrador)</label></div>
+<button type="submit" class="btn btn-primary btn-lg">Guardar novedad →</button>
+</form></div></section><partial name="_ValidationScriptsPartial" />
