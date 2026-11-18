@@ -8,7 +8,7 @@ public class EventEditViewModel
 {
     public int? Id { get; set; }
     [Required, MaxLength(140)] public string Name { get; set; } = "";
-    [Required, MaxLength(160)] public string Slug { get; set; } = "";
+    [Required, MaxLength(160), RegularExpression("^[a-z0-9]+(?:-[a-z0-9]+)*$", ErrorMessage = "Usá solo letras minúsculas, números y guiones, sin espacios ni barras.")] public string Slug { get; set; } = "";
     [Required, MaxLength(100)] public string City { get; set; } = "";
     [Required, MaxLength(100)] public string Province { get; set; } = "";
     [MaxLength(180)] public string Venue { get; set; } = "";
