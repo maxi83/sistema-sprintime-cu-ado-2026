@@ -80,3 +80,11 @@
 .community-article{margin-top:28px;max-width:860px}.community-article h1{font-size:clamp(2.3rem,6vw,4rem);line-height:1.1;margin:14px 0 28px}.community-article-image{width:100%;border-radius:20px;max-height:520px;object-fit:contain;background:#f4f5f6}.community-article-text{white-space:pre-line;overflow-wrap:anywhere;line-height:1.85;margin-top:24px;font-size:1.06rem}
 .sponsor-community-card{text-align:center;padding:26px}.sponsor-community-card img{width:100%;height:190px;object-fit:contain;display:block;margin-bottom:14px}.sponsor-community-card h2{font-size:1.25rem;margin:12px 0}.sponsor-community-card p{color:#68757b;line-height:1.6;white-space:pre-line;overflow-wrap:anywhere}.sponsor-placeholder{width:100%;height:190px;border-radius:12px;background:#f2f4f6;color:#a1a9ad;display:grid;place-items:center;font-size:3rem;font-weight:900}
 @media(max-width:680px){.community-grid,.sponsor-community-grid{grid-template-columns:1fr}.sponsor-community-card img{height:160px}}
+
+/* Medios de novedades: limitar ancho y alto incluso con fotos verticales enormes. */
+.community-article{width:100%;max-width:760px;margin-inline:auto;min-width:0}
+.community-article-media{width:100%;max-width:680px;max-height:380px;margin:24px auto;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:18px;background:#eae9e4}
+.community-article-media .community-article-image{display:block;width:100%;height:100%;max-height:380px;object-fit:contain;border-radius:0}
+.community-grid .community-card{min-width:0}
+.community-grid .community-card img{width:100%;height:210px;aspect-ratio:auto;object-fit:cover}
+@media(max-width:680px){.community-article-media{max-height:300px}.community-article-media .community-article-image{max-height:300px}.community-grid .community-card img{height:190px}}
