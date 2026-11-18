@@ -118,6 +118,8 @@ public class CommunityController(ApplicationDbContext db, IWebHostEnvironment en
              uri.Scheme != Uri.UriSchemeHttps))
             ModelState.AddModelError(nameof(input.LinkUrl), "El enlace debe comenzar con https://");
         if (!ValidImage(input.LogoFile)) ModelState.AddModelError(nameof(input.LogoFile), "Elegí una imagen JPG, PNG o WebP de hasta 5 MB.");
+        if (input.IsPublished && input.LogoFile is null && (input.RemoveLogo || string.IsNullOrWhiteSpace(input.LogoUrl)))
+            ModelState.AddModelError(nameof(input.LogoFile), "Para publicar un auspiciante, seleccioná su logo o fotografía.");
         if (!ModelState.IsValid) return View(input);
 
         CommunitySponsor sponsor;
