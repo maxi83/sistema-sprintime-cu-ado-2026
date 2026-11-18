@@ -1,0 +1,17 @@
+@model List<NewsPost>
+@{ ViewData["Title"] = "Novedades"; }
+<section class="page-hero compact"><div class="shell"><span class="eyebrow">COMUNIDAD SPRINTIME</span><h1>Novedades del <em>ciclismo.</em></h1><p>Equipos, carreras, entrenamientos y todas las noticias de nuestra comunidad.</p></div></section>
+<section class="section"><div class="shell">
+@if (Model.Count == 0) { <div class="empty-state"><h2>Próximamente habrá novedades</h2><p>Muy pronto compartiremos noticias y fotografías del ciclismo.</p></div> }
+else {
+<div class="community-grid">
+@foreach (var post in Model) {
+<article class="community-card">
+@if (!string.IsNullOrWhiteSpace(post.ImageUrl)) { <a asp-action="NewsDetail" asp-route-id="@post.Id"><img src="@post.ImageUrl" alt="Fotografía de @post.Title" loading="lazy"/></a> }
+<div class="community-content"><small>@post.CreatedAt.ToString("dd/MM/yyyy")</small><h2><a asp-action="NewsDetail" asp-route-id="@post.Id">@post.Title</a></h2>
+<p>@(post.Body.Length > 240 ? post.Body[..240] + "…" : post.Body)</p><a class="text-link" asp-action="NewsDetail" asp-route-id="@post.Id">Leer novedad →</a></div>
+</article>
+}
+</div>
+}
+</div></section>
