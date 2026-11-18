@@ -8,6 +8,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<HistoricPodium> HistoricPodiums => Set<HistoricPodium>();
     public DbSet<ManualPodium> ManualPodiums => Set<ManualPodium>();
     public DbSet<SocialLinks> SocialLinks => Set<SocialLinks>();
+    public DbSet<NewsPost> NewsPosts => Set<NewsPost>();
+    public DbSet<CommunitySponsor> CommunitySponsors => Set<CommunitySponsor>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<EventDistance> EventDistances => Set<EventDistance>();
     public DbSet<Category> Categories => Set<Category>();
