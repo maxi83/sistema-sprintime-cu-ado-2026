@@ -97,3 +97,10 @@
 .community-grid .community-content{padding:20px}
 .community-grid .community-content h2{overflow-wrap:anywhere}
 @media(max-width:680px){.community-grid{grid-template-columns:minmax(0,1fr)}.community-grid .community-card{max-width:100%}.community-grid .community-card>a{height:230px}.community-grid .community-card>a img{height:100%;object-fit:contain}}
+
+/* Galería de auspiciantes: grilla compacta y logos completos */
+.sponsor-community-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),300px));justify-content:start;align-items:start}
+.sponsor-community-grid .sponsor-community-card{width:100%;max-width:300px;min-width:0;padding:20px}
+.sponsor-community-grid .sponsor-community-card img{width:100%;height:180px;object-fit:contain}
+.sponsor-community-grid .sponsor-placeholder{height:180px}
+@media(max-width:680px){.sponsor-community-grid{grid-template-columns:minmax(0,1fr)}.sponsor-community-grid .sponsor-community-card{max-width:100%}}
