@@ -1,16 +1,44 @@
 using lucho_sprintime.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 
 namespace lucho_sprintime.Controllers;
 
 public class CyclistController(ApplicationDbContext db) : Controller
 {
-    public async Task<IActionResult> Dashboard(int? id = null)
+    [Authorize(Roles = "Cyclist"), HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateGender(string? gender)
     {
-        var cyclist = id.HasValue
-            ? await db.Cyclists.AsNoTracking().Include(x => x.Bicycles).Include(x => x.Registrations).ThenInclude(x => x.Event).Include(x => x.Registrations).ThenInclude(x => x.Result).FirstOrDefaultAsync(x => x.Id == id)
-            : await db.Cyclists.AsNoTracking().Include(x => x.Bicycles).Include(x => x.Registrations).ThenInclude(x => x.Event).Include(x => x.Registrations).ThenInclude(x => x.Result).FirstOrDefaultAsync();
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var cyclistId)) return Challenge();
+        if (gender is not ("Masculino" or "Femenino"))
+        {
+            TempData["Error"] = "Seleccioná una opción válida para la categoría de competencia.";
+            return RedirectToAction(nameof(Profile));
+        }
+        var cyclist = await db.Cyclists.FirstOrDefaultAsync(x => x.Id == cyclistId);
+        if (cyclist is null) return NotFound();
+        cyclist.Gender = gender;
+        await db.SaveChangesAsync();
+        TempData["Success"] = "Dato actualizado para asignar tu categoría.";
+        return RedirectToAction(nameof(Profile));
+    }
+
+
+    [Authorize(Roles = "Cyclist"), HttpGet]
+    public async Task<IActionResult> Profile()
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var cyclistId)) return Challenge();
+        var cyclist = await db.Cyclists.AsNoTracking().FirstOrDefaultAsync(x => x.Id == cyclistId);
+        return cyclist is null ? NotFound() : View(cyclist);
+    }
+
+    [Authorize(Roles = "Cyclist")]
+    public async Task<IActionResult> Dashboard()
+    {
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var cyclistId)) return Challenge();
+        var cyclist = await db.Cyclists.AsNoTracking().Include(x => x.Bicycles).Include(x => x.Registrations).ThenInclude(x => x.Event).Include(x => x.Registrations).ThenInclude(x => x.EventDistance).Include(x => x.Registrations).ThenInclude(x => x.Result).FirstOrDefaultAsync(x => x.Id == cyclistId);
         return cyclist is null ? NotFound() : View(cyclist);
     }
 }

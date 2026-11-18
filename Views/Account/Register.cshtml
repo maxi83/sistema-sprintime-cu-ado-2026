@@ -1,0 +1,21 @@
+@model lucho_sprintime.ViewModels.CyclistAccountInput
+@{ ViewData["Title"]="Crear perfil de ciclista"; }
+<section class="section form-section"><div class="shell narrow"><h1>Crear mi perfil de ciclista</h1><p>Completá una vez tus datos para inscribirte en futuras carreras. Los datos de salud son opcionales y solo para la seguridad de la competencia.</p>
+<form asp-controller="Account" asp-action="Register" method="post" class="premium-form"><input type="hidden" asp-for="ReturnUrl"/><div asp-validation-summary="All" class="validation-summary"></div>
+<div class="form-card"><h2>Tu cuenta</h2><div class="field-grid">
+<label class="field"><span>Nombre</span><input asp-for="FirstName" required/></label><label class="field"><span>Apellido</span><input asp-for="LastName" required/></label>
+<label class="field"><span>DNI</span><input asp-for="Dni" required/></label><label class="field"><span>Fecha de nacimiento</span><input asp-for="BirthDate" type="date" required/></label>
+<label class="field"><span>Sexo para la categoría de competencia</span><select asp-for="Gender" required><option value="">Seleccioná una opción</option><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option></select><span asp-validation-for="Gender" class="field-error"></span></label>
+<label class="field"><span>Correo electrónico</span><input asp-for="Email" type="email" required/></label><label class="field"><span>Contraseña (mínimo 10 caracteres)</span><input asp-for="Password" type="password" autocomplete="new-password" required/></label>
+<label class="field"><span>Teléfono</span><input asp-for="Phone" required/></label><label class="field"><span>Ciudad</span><input asp-for="City"/></label>
+<label class="field"><span>Equipo o club</span><input asp-for="Team"/></label></div></div>
+<div class="form-card"><h2>Seguridad y emergencia</h2><div class="field-grid">
+<label class="field"><span>Contacto de emergencia</span><input asp-for="EmergencyContact" required/></label><label class="field"><span>Teléfono de emergencia 1</span><input asp-for="EmergencyPhone" required/></label>
+<label class="field"><span>Teléfono de emergencia 2 (opcional)</span><input asp-for="SecondEmergencyPhone"/></label>
+<label class="field"><span>Grupo y factor sanguíneo (opcional, solo si lo conocés)</span><select asp-for="BloodType"><option value="">No informado</option>@foreach(var blood in new[]{"A+","A-","B+","B-","AB+","AB-","O+","O-"}){<option value="@blood">@blood</option>}</select></label>
+<label class="check-field"><input asp-for="HasInsurance"/> Tengo seguro</label><label class="field"><span>Número de seguro/póliza (si corresponde)</span><input asp-for="InsuranceNumber"/></label>
+<label class="field span-2"><span>Enfermedades de base (opcional)</span><textarea asp-for="MedicalConditions" rows="3"></textarea></label>
+<label class="field span-2"><span>Alergias y observaciones médicas (opcional)</span><textarea asp-for="MedicalNotes" rows="3"></textarea></label></div>
+<label class="check-field"><input type="checkbox" id="MedicalConsent" name="MedicalConsent" value="true" required aria-describedby="medical-consent-help"/> <span>Consiento el tratamiento de estos datos para gestionar mi inscripción y la seguridad de las carreras, con acceso limitado al personal autorizado.</span></label><span id="medical-consent-help" asp-validation-for="MedicalConsent" class="field-error"></span></div>
+<button class="btn btn-primary btn-lg" type="submit">Crear cuenta y continuar →</button><p>¿Ya tenés cuenta? <a asp-action="CyclistLogin" asp-route-returnUrl="@Model.ReturnUrl">Iniciar sesión</a></p></form></div></section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

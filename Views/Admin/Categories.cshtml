@@ -1,0 +1,60 @@
+@model lucho_sprintime.Models.EventDistance
+@{
+    ViewData["Title"] = "Categorías · " + Model.Name;
+}
+<section class="section"><div class="shell" style="max-width:1050px">
+    <span class="eyebrow">CONTROL CENTER · CATEGORÍAS</span>
+    <h1>Categorías de @Model.Name</h1>
+    <p>Configurá las edades y quién puede elegir cada categoría. Las edades se calculan el día de la carrera.</p>
+    <p><a class="btn btn-outline" asp-action="EditEvent" asp-route-id="@Model.EventId">Volver a editar carrera</a></p>
+    <div class="admin-card" style="padding:22px;margin:22px 0">
+        <h2>Categorías de carreras libres</h2>
+        <p>Agrega las seis categorías indicadas por Lucho sin modificar las inscripciones ni borrar categorías existentes.</p>
+        <form asp-action="AddFreeRaceCategories" method="post">
+            <input type="hidden" name="distanceId" value="@Model.Id" />
+            <button type="submit" class="btn btn-primary">Agregar categorías de carreras libres</button>
+        </form>
+    </div>
+    @foreach (var category in Model.Categories)
+    {
+        <div class="admin-card" style="padding:22px;margin:18px 0">
+            <form asp-action="SaveCategory" method="post">
+                <input type="hidden" name="distanceId" value="@Model.Id" />
+                <input type="hidden" name="categoryId" value="@category.Id" />
+                <div class="field-grid">
+                    <label class="field span-2"><span>Nombre de la categoría</span><input name="name" maxlength="80" required value="@category.Name" /></label>
+                    <label class="field"><span>Edad mínima (vacío = sin límite)</span><input name="minAge" type="number" min="0" max="120" value="@category.MinAge" /></label>
+                    <label class="field"><span>Edad máxima (vacío = sin límite)</span><input name="maxAge" type="number" min="0" max="120" value="@category.MaxAge" /></label>
+                    <label class="field"><span>Sexo para la competencia</span>
+                        <select name="gender">
+                            <option value="Masculino" selected="@(category.Gender == "Masculino")">Masculino</option>
+                            <option value="Femenino" selected="@(category.Gender == "Femenino")">Femenino</option>
+                            <option value="Mixto" selected="@(category.Gender == "Mixto")">Mixto</option>
+                        </select>
+                    </label>
+                    <label class="check-field"><input type="checkbox" name="isSelectableByCyclist" value="true" checked="@category.IsSelectableByCyclist" /><span>El ciclista puede elegirla aunque no sea su categoría automática</span></label>
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar categoría</button>
+            </form>
+            <form asp-action="DeleteCategory" method="post" style="margin-top:12px" onsubmit="return confirm('¿Eliminar esta categoría si no tiene inscriptos?')">
+                <input type="hidden" name="distanceId" value="@Model.Id" />
+                <input type="hidden" name="categoryId" value="@category.Id" />
+                <button type="submit" class="btn btn-outline">Eliminar categoría</button>
+            </form>
+        </div>
+    }
+    <div class="admin-card" style="padding:22px;margin:22px 0">
+        <h2>Agregar categoría personalizada</h2>
+        <form asp-action="SaveCategory" method="post">
+            <input type="hidden" name="distanceId" value="@Model.Id" />
+            <div class="field-grid">
+                <label class="field span-2"><span>Nombre</span><input name="name" maxlength="80" required placeholder="Nombre de categoría" /></label>
+                <label class="field"><span>Edad mínima</span><input name="minAge" type="number" min="0" max="120" /></label>
+                <label class="field"><span>Edad máxima</span><input name="maxAge" type="number" min="0" max="120" /></label>
+                <label class="field"><span>Sexo</span><select name="gender"><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option><option value="Mixto">Mixto</option></select></label>
+                <label class="check-field"><input type="checkbox" name="isSelectableByCyclist" value="true" /><span>Puede elegirse voluntariamente</span></label>
+            </div>
+            <button type="submit" class="btn btn-primary">Agregar categoría</button>
+        </form>
+    </div>
+</div></section>

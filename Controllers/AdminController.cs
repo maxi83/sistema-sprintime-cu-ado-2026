@@ -9,8 +9,48 @@ using Microsoft.EntityFrameworkCore;
 namespace lucho_sprintime.Controllers;
 
 [Authorize(Roles = "Administrator,Organizer")]
-public class AdminController(ApplicationDbContext db, IExportService exportService) : Controller
+public class AdminController(ApplicationDbContext db, IExportService exportService, IWebHostEnvironment hostEnvironment) : Controller
 {
+    [HttpGet]
+    public async Task<IActionResult> SocialLinks()
+    {
+        var settings = await db.SocialLinks.AsNoTracking().FirstOrDefaultAsync(x => x.Id == 1);
+        return View(new SocialLinksInput {
+            RankingEnabled = settings?.RankingEnabled ?? false,
+            FacebookUrl = settings?.FacebookUrl, InstagramUrl = settings?.InstagramUrl,
+            WhatsappGroupUrl = settings?.WhatsappGroupUrl, FacebookEnabled = settings?.FacebookEnabled ?? false,
+            InstagramEnabled = settings?.InstagramEnabled ?? false, WhatsappGroupEnabled = settings?.WhatsappGroupEnabled ?? false
+        });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> SocialLinks(SocialLinksInput input)
+    {
+        static bool ValidLink(string? url, string host) =>
+            string.IsNullOrWhiteSpace(url) ||
+            (Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps &&
+             (uri.Host == host || uri.Host.EndsWith("." + host, StringComparison.OrdinalIgnoreCase)));
+        if (!ValidLink(input.FacebookUrl, "facebook.com") && !ValidLink(input.FacebookUrl, "fb.com"))
+            ModelState.AddModelError(nameof(input.FacebookUrl), "Usá un enlace HTTPS de Facebook.");
+        if (!ValidLink(input.InstagramUrl, "instagram.com"))
+            ModelState.AddModelError(nameof(input.InstagramUrl), "Usá un enlace HTTPS de Instagram.");
+        if (!ValidLink(input.WhatsappGroupUrl, "chat.whatsapp.com"))
+            ModelState.AddModelError(nameof(input.WhatsappGroupUrl), "Usá un enlace de invitación HTTPS de WhatsApp.");
+        if (!ModelState.IsValid) return View(input);
+        var settings = await db.SocialLinks.FirstOrDefaultAsync(x => x.Id == 1);
+        if (settings is null) { settings = new SocialLinks { Id = 1 }; db.SocialLinks.Add(settings); }
+        settings.RankingEnabled = input.RankingEnabled;
+        settings.FacebookUrl = input.FacebookUrl?.Trim();
+        settings.InstagramUrl = input.InstagramUrl?.Trim();
+        settings.WhatsappGroupUrl = input.WhatsappGroupUrl?.Trim();
+        settings.FacebookEnabled = input.FacebookEnabled && !string.IsNullOrWhiteSpace(settings.FacebookUrl);
+        settings.InstagramEnabled = input.InstagramEnabled && !string.IsNullOrWhiteSpace(settings.InstagramUrl);
+        settings.WhatsappGroupEnabled = input.WhatsappGroupEnabled && !string.IsNullOrWhiteSpace(settings.WhatsappGroupUrl);
+        await db.SaveChangesAsync();
+        TempData["Success"] = "Enlaces actualizados.";
+        return RedirectToAction(nameof(SocialLinks));
+    }
+
     public async Task<IActionResult> Dashboard(int? eventId = null)
     {
         var race = eventId.HasValue
@@ -55,13 +95,37 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> AssignBib(int registrationId, string bibNumber)
     {
-        var reg = await db.Registrations.FirstOrDefaultAsync(x => x.Id == registrationId);
+        var ajax = string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
+        var reg = await db.Registrations.Include(x => x.Cyclist).FirstOrDefaultAsync(x => x.Id == registrationId);
         if (reg is null) return NotFound();
-        bibNumber = (bibNumber ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(bibNumber)) { TempData["Error"] = "Ingresá un dorsal."; return RedirectToAction(nameof(Participants), new { eventId = reg.EventId }); }
-        var exists = await db.Registrations.AnyAsync(x => x.EventId == reg.EventId && x.Id != reg.Id && x.BibNumber == bibNumber);
-        if (exists) TempData["Error"] = "Ese dorsal ya está asignado.";
-        else { reg.BibNumber = bibNumber; await db.SaveChangesAsync(); TempData["Success"] = "Dorsal actualizado."; }
+        if (!int.TryParse(bibNumber, out var number) || number < 1 || number > 200)
+        {
+            if (ajax) return BadRequest(new { error = "Ingresá un dorsal del 1 al 200." });
+            TempData["Error"] = "Ingresá un dorsal del 1 al 200.";
+            return RedirectToAction(nameof(Participants), new { eventId = reg.EventId });
+        }
+        var bib = number.ToString();
+        if (await db.Cyclists.AnyAsync(x => x.Id != reg.CyclistId && x.SprintimeBib == bib) ||
+            await db.Registrations.AnyAsync(x => x.CyclistId != reg.CyclistId && x.BibNumber == bib))
+        {
+            if (ajax) return Conflict(new { error = "Ese dorsal ya está asignado a otro ciclista." });
+            TempData["Error"] = "Ese dorsal ya está asignado a otro ciclista.";
+            return RedirectToAction(nameof(Participants), new { eventId = reg.EventId });
+        }
+        reg.Cyclist.SprintimeBib = bib;
+        var registrations = await db.Registrations.Where(x => x.CyclistId == reg.CyclistId).ToListAsync();
+        foreach (var entry in registrations) entry.BibNumber = bib;
+        try
+        {
+            await db.SaveChangesAsync();
+            if (ajax) return Ok(new { bib, message = "Dorsal " + bib + " asignado correctamente." });
+            TempData["Success"] = "Dorsal " + bib + " asignado correctamente para todas las carreras del ciclista.";
+        }
+        catch (DbUpdateException)
+        {
+            if (ajax) return Conflict(new { error = "No se pudo guardar el dorsal; verificá que no esté ocupado." });
+            TempData["Error"] = "No se pudo guardar el dorsal; verificá que no esté ocupado.";
+        }
         return RedirectToAction(nameof(Participants), new { eventId = reg.EventId });
     }
 
@@ -69,14 +133,16 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
     public async Task<IActionResult> EditEvent(int? id = null)
     {
         if (!id.HasValue)
-            return View(new EventEditViewModel { StartDate = DateTime.Today.AddDays(30).AddHours(9), RegistrationOpenAt = DateTime.Today, RegistrationCloseAt = DateTime.Today.AddDays(28).AddHours(22) });
-        var race = await db.Events.Include(x => x.Distances).ThenInclude(x => x.Categories).FirstOrDefaultAsync(x => x.Id == id.Value);
+            return View(new EventEditViewModel { StartDate = DateTime.Today.AddDays(30).AddHours(9), RegistrationOpenAt = DateTime.Today, RegistrationCloseAt = DateTime.Today.AddDays(28).AddHours(22), Status = EventStatus.Draft });
+        var race = await db.Events.Include(x => x.HistoricPodiums).Include(x => x.Distances).ThenInclude(x => x.Categories).FirstOrDefaultAsync(x => x.Id == id.Value);
         if (race is null) return NotFound();
         return View(new EventEditViewModel
         {
             Id = race.Id, Name = race.Name, Slug = race.Slug, City = race.City, Province = race.Province, Venue = race.Venue,
             StartDate = race.StartDate, RegistrationOpenAt = race.RegistrationOpenAt, RegistrationCloseAt = race.RegistrationCloseAt,
             Description = race.Description, HeroImageUrl = race.HeroImageUrl, RegulationUrl = race.RegulationUrl, GpxUrl = race.GpxUrl,
+            PhotoAlbumUrl = race.PhotoAlbumUrl, GalleryImageUrls = race.GalleryImageUrls,
+            PodiumEntries = string.Join(Environment.NewLine, race.HistoricPodiums.OrderBy(x => x.Category).ThenBy(x => x.Place).Select(x => $"{x.Category} | {x.Place} | {x.CyclistName}")),
             ElevationGainMeters = race.ElevationGainMeters, Status = race.Status, ShowPublicParticipants = race.ShowPublicParticipants,
             AllowOnsiteRegistration = race.AllowOnsiteRegistration,
             Distances = race.Distances.Select(d => new EventEditViewModel.DistanceInput { Id = d.Id, Name = d.Name, Kilometers = d.Kilometers, Price = d.Price, MaxParticipants = d.MaxParticipants, Categories = string.Join(", ", d.Categories.Select(c => c.Name)) }).ToList()
@@ -90,12 +156,44 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
         if (await db.Events.AnyAsync(x => x.Slug == model.Slug && x.Id != model.Id)) ModelState.AddModelError(nameof(model.Slug), "Ya existe una carrera con ese slug.");
         model.Distances = model.Distances.Where(x => !string.IsNullOrWhiteSpace(x.Name)).ToList();
         if (model.Distances.Count == 0) ModelState.AddModelError(nameof(model.Distances), "Agregá al menos una distancia.");
+        var photos = (model.GalleryImageUrls ?? "").Split(['\r','\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (photos.Length > 6) ModelState.AddModelError(nameof(model.GalleryImageUrls), "Se permiten hasta 6 imágenes.");
+        foreach (var photo in photos)
+            if (!Uri.TryCreate(photo, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps ||
+                photo.Length > 500 || !new[]{".jpg",".jpeg",".png",".webp"}.Any(ext => uri.AbsolutePath.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
+                ModelState.AddModelError(nameof(model.GalleryImageUrls), "Cada foto debe ser una URL HTTPS pública terminada en .jpg, .jpeg, .png o .webp.");
+        if (model.HeroImageFile is { } image)
+        {
+            if (image.Length == 0 || image.Length > 5 * 1024 * 1024)
+                ModelState.AddModelError(nameof(model.HeroImageFile), "La imagen debe pesar como máximo 5 MB.");
+            var ext = Path.GetExtension(image.FileName).ToLowerInvariant();
+            if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+                ModelState.AddModelError(nameof(model.HeroImageFile), "Elegí una imagen JPG, PNG o WebP.");
+        }
+        if (!string.IsNullOrWhiteSpace(model.PhotoAlbumUrl) &&
+            (!Uri.TryCreate(model.PhotoAlbumUrl, UriKind.Absolute, out var album) ||
+             album.Scheme != Uri.UriSchemeHttps || !(album.Host == "drive.google.com" || album.Host == "docs.google.com")))
+            ModelState.AddModelError(nameof(model.PhotoAlbumUrl), "Usá un enlace HTTPS de Google Drive.");
+        var podiums = new List<HistoricPodium>();
+        foreach (var line in (model.PodiumEntries ?? "").Split(['\r','\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var parts = line.Split('|', 3, StringSplitOptions.TrimEntries);
+            if (parts.Length != 3 || !int.TryParse(parts[1], out var place) || place < 1 || place > 3 ||
+                parts[0].Length is < 1 or > 120 || parts[2].Length is < 1 or > 160)
+            {
+                ModelState.AddModelError(nameof(model.PodiumEntries), "Usá una línea por puesto: Categoría | 1, 2 o 3 | Nombre.");
+                continue;
+            }
+            podiums.Add(new HistoricPodium { Category = parts[0], Place = place, CyclistName = parts[2] });
+        }
+        if (podiums.GroupBy(x => new { x.Category, x.Place }).Any(x => x.Count() > 1))
+            ModelState.AddModelError(nameof(model.PodiumEntries), "No repitas posiciones de una misma categoría.");
         if (!ModelState.IsValid) return View(model);
 
         Event race;
         if (model.Id.HasValue)
         {
-            race = await db.Events.Include(x => x.Distances).ThenInclude(x => x.Categories).FirstAsync(x => x.Id == model.Id.Value);
+            race = await db.Events.Include(x => x.HistoricPodiums).Include(x => x.Distances).ThenInclude(x => x.Categories).FirstAsync(x => x.Id == model.Id.Value);
         }
         else
         {
@@ -103,24 +201,135 @@ public class AdminController(ApplicationDbContext db, IExportService exportServi
         }
         race.Name = model.Name.Trim(); race.Slug = model.Slug.Trim().ToLowerInvariant(); race.City = model.City.Trim(); race.Province = model.Province.Trim(); race.Venue = model.Venue.Trim();
         race.StartDate = model.StartDate; race.RegistrationOpenAt = model.RegistrationOpenAt; race.RegistrationCloseAt = model.RegistrationCloseAt; race.Description = model.Description.Trim();
-        race.HeroImageUrl = model.HeroImageUrl; race.RegulationUrl = model.RegulationUrl; race.GpxUrl = model.GpxUrl; race.ElevationGainMeters = model.ElevationGainMeters; race.Status = model.Status;
+        if (model.HeroImageFile is { } imageFile)
+        {
+            await using var stream = imageFile.OpenReadStream();
+            var magic = new byte[12];
+            var bytes = await stream.ReadAsync(magic.AsMemory());
+            var jpg = bytes >= 3 && magic[0] == 255 && magic[1] == 216 && magic[2] == 255;
+            var png = bytes >= 8 && magic.AsSpan(0, 8).SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 });
+            var webp = bytes >= 12 && System.Text.Encoding.ASCII.GetString(magic, 0, 4) == "RIFF" && System.Text.Encoding.ASCII.GetString(magic, 8, 4) == "WEBP";
+            var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
+            if (!((ext == ".jpg" || ext == ".jpeg") && jpg) && !(ext == ".png" && png) && !(ext == ".webp" && webp))
+            {
+                ModelState.AddModelError(nameof(model.HeroImageFile), "El archivo no tiene un formato de imagen válido.");
+                return View(model);
+            }
+            var folder = Path.Combine(hostEnvironment.WebRootPath, "uploads", "events");
+            Directory.CreateDirectory(folder);
+            var filename = Guid.NewGuid().ToString("N") + (jpg ? ".jpg" : ext);
+            stream.Position = 0;
+            await using (var output = System.IO.File.Create(Path.Combine(folder, filename)))
+                await stream.CopyToAsync(output);
+            model.HeroImageUrl = "/uploads/events/" + filename;
+        }
+        race.HeroImageUrl = model.RemoveHeroImage && model.HeroImageFile is null ? null : model.HeroImageUrl; race.RegulationUrl = model.RegulationUrl; race.GpxUrl = model.GpxUrl; race.ElevationGainMeters = model.ElevationGainMeters; race.Status = model.Status;
         race.ShowPublicParticipants = model.ShowPublicParticipants; race.AllowOnsiteRegistration = model.AllowOnsiteRegistration;
+        race.PhotoAlbumUrl = string.IsNullOrWhiteSpace(model.PhotoAlbumUrl) ? null : model.PhotoAlbumUrl.Trim();
+        race.GalleryImageUrls = photos.Length == 0 ? null : string.Join("\n", photos);
+        foreach (var old in race.HistoricPodiums.ToList())
+        {
+            var match = podiums.FirstOrDefault(x =>
+                x.Category.Equals(old.Category, StringComparison.OrdinalIgnoreCase) && x.Place == old.Place);
+            if (match is null) db.HistoricPodiums.Remove(old);
+            else old.CyclistName = match.CyclistName;
+        }
+        foreach (var entry in podiums.Where(x => !race.HistoricPodiums.Any(old =>
+            old.Category.Equals(x.Category, StringComparison.OrdinalIgnoreCase) && old.Place == x.Place)))
+            race.HistoricPodiums.Add(entry);
 
         foreach (var input in model.Distances)
         {
             var distance = input.Id.HasValue ? race.Distances.FirstOrDefault(x => x.Id == input.Id.Value) : null;
             if (distance is null) { distance = new EventDistance(); race.Distances.Add(distance); }
             distance.Name = input.Name.Trim(); distance.Kilometers = input.Kilometers; distance.Price = input.Price; distance.MaxParticipants = input.MaxParticipants;
-            var names = input.Categories.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            foreach (var old in distance.Categories.Where(x => !names.Contains(x.Name, StringComparer.OrdinalIgnoreCase)).ToList())
+            // Las categorías de distancias existentes se administran en la pantalla de reglas;
+            // guardar el resto del evento nunca debe borrarlas ni modificar sus rangos.
+            if (!input.Id.HasValue)
             {
-                if (!await db.Registrations.AnyAsync(x => x.CategoryId == old.Id)) db.Categories.Remove(old);
+                var names = (input.Categories ?? "").Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                foreach (var name in names)
+                    distance.Categories.Add(new Category { Name = name, Gender = "Mixto" });
             }
-            foreach (var name in names.Where(name => !distance.Categories.Any(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))) distance.Categories.Add(new Category { Name = name, Gender = "Mixto" });
         }
         await db.SaveChangesAsync();
         TempData["Success"] = "Carrera guardada.";
         return RedirectToAction(nameof(Dashboard), new { eventId = race.Id });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Categories(int distanceId)
+    {
+        var distance = await db.EventDistances.Include(x => x.Event).Include(x => x.Categories)
+            .FirstOrDefaultAsync(x => x.Id == distanceId);
+        if (distance is null) return NotFound();
+        distance.Categories = distance.Categories.OrderBy(x => x.MinAge ?? -1).ThenBy(x => x.Name).ToList();
+        return View(distance);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveCategory(int distanceId, int? categoryId, string name, int? minAge, int? maxAge,
+        string gender, bool isSelectableByCyclist)
+    {
+        var distance = await db.EventDistances.Include(x => x.Categories).FirstOrDefaultAsync(x => x.Id == distanceId);
+        if (distance is null) return NotFound();
+        var category = categoryId.HasValue ? distance.Categories.FirstOrDefault(x => x.Id == categoryId.Value) : null;
+        if (categoryId.HasValue && category is null) return NotFound();
+        name = (name ?? "").Trim();
+        if (name.Length is < 1 or > 80 || gender is not ("Masculino" or "Femenino" or "Mixto") ||
+            (minAge.HasValue && (minAge < 0 || minAge > 120)) || (maxAge.HasValue && (maxAge < 0 || maxAge > 120)) ||
+            (minAge.HasValue && maxAge.HasValue && minAge > maxAge) ||
+            distance.Categories.Any(x => x.Id != categoryId && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+        {
+            TempData["Error"] = "Comprobá el nombre, el sexo, las edades y que la categoría no esté repetida.";
+            return RedirectToAction(nameof(Categories), new { distanceId });
+        }
+        if (category is null) { category = new Category(); distance.Categories.Add(category); }
+        category.Name = name; category.MinAge = minAge; category.MaxAge = maxAge; category.Gender = gender;
+        category.IsSelectableByCyclist = isSelectableByCyclist;
+        await db.SaveChangesAsync();
+        TempData["Success"] = "Reglas de la categoría guardadas.";
+        return RedirectToAction(nameof(Categories), new { distanceId });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddFreeRaceCategories(int distanceId)
+    {
+        var distance = await db.EventDistances.Include(x => x.Categories).FirstOrDefaultAsync(x => x.Id == distanceId);
+        if (distance is null) return NotFound();
+        var defaults = new (string Name, int? Min, int? Max, string Gender, bool Choice)[]
+        {
+            ("-40 (Sub-23, Élite, Máster A)", 0, 39, "Masculino", false),
+            ("+40 (Máster B)", 40, 49, "Masculino", false),
+            ("+50 (Máster C)", 50, 59, "Masculino", false),
+            ("+60 (Máster D)", 60, null, "Masculino", false),
+            ("Damas únicas", null, null, "Femenino", false),
+            ("Élite 2 (Promocionales)", null, null, "Masculino", true)
+        };
+        foreach (var preset in defaults)
+            if (!distance.Categories.Any(x => x.Name.Equals(preset.Name, StringComparison.OrdinalIgnoreCase)))
+                distance.Categories.Add(new Category { Name = preset.Name, MinAge = preset.Min,
+                    MaxAge = preset.Max, Gender = preset.Gender, IsSelectableByCyclist = preset.Choice });
+        await db.SaveChangesAsync();
+        TempData["Success"] = "Se agregaron las categorías de carreras libres. No se eliminó ninguna categoría anterior.";
+        return RedirectToAction(nameof(Categories), new { distanceId });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteCategory(int distanceId, int categoryId)
+    {
+        var category = await db.Categories.FirstOrDefaultAsync(x => x.Id == categoryId && x.EventDistanceId == distanceId);
+        if (category is null) return NotFound();
+        if (await db.Registrations.AnyAsync(x => x.CategoryId == categoryId))
+            TempData["Error"] = "No podés eliminar una categoría que ya tiene inscriptos.";
+        else
+        {
+            db.Categories.Remove(category);
+            await db.SaveChangesAsync();
+            TempData["Success"] = "Categoría eliminada.";
+        }
+        return RedirectToAction(nameof(Categories), new { distanceId });
     }
 
     [HttpPost, ValidateAntiForgeryToken]

@@ -1,0 +1,10 @@
+@model List<NewsPost>
+@{ ViewData["Title"] = "Administrar novedades"; ViewData["BodyClass"] = "admin-page"; }
+<section class="section"><div class="shell narrow"><a class="back-link" asp-controller="Admin" asp-action="Dashboard">← Panel del organizador</a><div class="section-head"><div><span class="eyebrow">CONTENIDOS</span><h1>Administrar novedades</h1></div><a class="btn btn-primary" asp-action="EditNews">+ Nueva novedad</a></div>
+@if (Model.Count == 0) { <p>Todavía no hay publicaciones. Creá la primera desde el botón superior.</p> }
+@foreach (var post in Model) {
+<div class="admin-card" style="margin:15px 0;padding:20px"><small>@(post.IsPublished ? "Publicada" : "Borrador") · @post.CreatedAt.ToString("dd/MM/yyyy")</small><h2>@post.Title</h2>
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px"><a class="btn btn-outline" asp-action="EditNews" asp-route-id="@post.Id">Editar</a>
+<form asp-action="DeleteNews" method="post" onsubmit="return confirm('¿Eliminar esta novedad?');"><input type="hidden" name="id" value="@post.Id"/><button class="btn btn-danger" type="submit">Eliminar</button></form></div></div>
+}
+</div></section>

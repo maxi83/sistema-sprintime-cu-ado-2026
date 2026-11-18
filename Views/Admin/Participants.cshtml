@@ -1,3 +1,40 @@
 @model List<Registration>
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostEnvironment
 @{ var race=(Event)ViewBag.Event; ViewData["Title"]="Participantes · "+race.Name; ViewData["BodyClass"]="admin-page"; }
-<section class="admin-standalone"><div class="shell"><div class="admin-topbar"><div><a class="back-link" asp-action="Dashboard" asp-route-eventId="@race.Id">← Control Center</a><span class="eyebrow">PARTICIPANTES</span><h1>@race.Name</h1><p>@Model.Count registros visibles con los filtros actuales.</p></div><div class="admin-actions"><a class="btn btn-outline" asp-action="Export" asp-route-eventId="@race.Id" asp-route-format="csv">Exportar CSV</a><a class="btn btn-primary" asp-controller="RaceDay" asp-action="CheckIn" asp-route-eventId="@race.Id">Acreditación</a></div></div><form method="get" class="filter-bar"><input type="hidden" name="eventId" value="@race.Id"/><input type="search" name="q" value="@ViewBag.Query" placeholder="Nombre, DNI o dorsal"/><select name="payment"><option value="">Todos los pagos</option>@foreach(var p in Enum.GetValues<PaymentStatus>()){<option value="@p" selected="@(ViewBag.Payment as string == p.ToString())">@p</option>}</select><button class="btn btn-dark">Filtrar</button></form><div class="table-shell"><table class="data-table"><thead><tr><th>Corredor</th><th>DNI</th><th>Distancia</th><th>Categoría</th><th>Pago</th><th>Dorsal</th><th>Check-in</th></tr></thead><tbody>@foreach(var r in Model){<tr><td><b>@r.Cyclist.LastName, @r.Cyclist.FirstName</b><small>@r.Cyclist.Email</small></td><td>@r.Cyclist.Dni</td><td>@r.EventDistance.Name</td><td>@r.Category.Name</td><td><span class="status-pill @(r.PaymentStatus==PaymentStatus.Approved?"ok":r.PaymentStatus==PaymentStatus.Pending?"pending":"bad")">@r.PaymentStatus</span></td><td><form asp-action="AssignBib" method="post" class="bib-form"><input type="hidden" name="registrationId" value="@r.Id"/><input name="bibNumber" value="@r.BibNumber" placeholder="—"/><button>✓</button></form></td><td>@r.CheckInStatus</td></tr>}</tbody></table></div></div></section>
+<section class="admin-standalone"><div class="shell"><div class="admin-topbar"><div><a class="back-link" asp-action="Dashboard" asp-route-eventId="@race.Id">← Panel del organizador</a><span class="eyebrow">PARTICIPANTES</span><h1>@race.Name</h1><p>@Model.Count registros visibles con los filtros actuales.</p></div><div class="admin-actions"><a class="btn btn-outline" asp-action="Export" asp-route-eventId="@race.Id" asp-route-format="csv">Exportar CSV</a><a class="btn btn-primary" asp-controller="RaceDay" asp-action="CheckIn" asp-route-eventId="@race.Id">Acreditación</a></div></div><form method="get" class="filter-bar"><input type="hidden" name="eventId" value="@race.Id"/><input type="search" name="q" value="@ViewBag.Query" placeholder="Nombre, DNI o dorsal"/><select name="payment"><option value="">Todos los pagos</option>@foreach(var p in Enum.GetValues<PaymentStatus>()){<option value="@p" selected="@(ViewBag.Payment as string == p.ToString())">@(p == PaymentStatus.Approved ? "Aprobado" : p == PaymentStatus.Pending ? "Pendiente" : p.ToString())</option>}</select><button class="btn btn-dark">Filtrar</button></form><div class="table-shell"><table class="data-table"><thead><tr><th>Corredor</th><th>DNI</th><th>Distancia</th><th>Categoría</th><th>Pago</th><th>Dorsal SprinTime</th><th>Acreditación</th></tr></thead><tbody>@foreach(var r in Model){<tr><td><b>@r.Cyclist.LastName, @r.Cyclist.FirstName</b><small>@r.Cyclist.Email</small></td><td>@r.Cyclist.Dni</td><td>@r.EventDistance.Name</td><td>@r.Category.Name</td><td><span class="status-pill @(r.PaymentStatus==PaymentStatus.Approved?"ok":r.PaymentStatus==PaymentStatus.Pending?"pending":"bad")">@(r.PaymentStatus == PaymentStatus.Approved ? "Aprobado" : r.PaymentStatus == PaymentStatus.Pending ? "Pendiente" : r.PaymentStatus.ToString())</span>@if(HostEnvironment.EnvironmentName == "Development" && r.PaymentStatus == PaymentStatus.Pending){<form asp-controller="Registration" asp-action="DemoApprove" method="post" style="margin-top:7px"><input type="hidden" name="id" value="@r.Id"/><input type="hidden" name="returnEventId" value="@race.Id"/><button type="submit" style="border:1px solid #32805b;color:#166534;background:#eaf8ef;border-radius:7px;padding:6px 8px;cursor:pointer;font-size:12px;font-weight:bold">Aprobar pago de prueba</button></form>}</td><td><form asp-action="AssignBib" method="post" class="bib-form" data-bib-form><input type="hidden" name="registrationId" value="@r.Id"/><input name="bibNumber" value="@(r.Cyclist.SprintimeBib ?? r.BibNumber)" placeholder="1–200" min="1" max="200" type="number"/><button type="submit" aria-label="Guardar dorsal">✓</button><span data-bib-message role="status" aria-live="polite" style="display:block;font-size:12px;margin-top:5px"></span></form></td><td>@(r.CheckInStatus.ToString() == "Finished" ? "Finalizado" : r.CheckInStatus.ToString() == "CheckedIn" ? "Acreditado" : r.CheckInStatus.ToString() == "Pending" ? "Pendiente" : r.CheckInStatus.ToString())</td></tr>}</tbody></table></div></div></section>
+
+@section Scripts {
+<script>
+(() => {
+  for (const form of document.querySelectorAll('[data-bib-form]')) {
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const button = form.querySelector('button[type="submit"]');
+      const input = form.querySelector('input[name="bibNumber"]');
+      const message = form.querySelector('[data-bib-message]');
+      if (!form.reportValidity()) return;
+      button.disabled = true;
+      message.textContent = 'Guardando...';
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin'
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'No se pudo guardar el dorsal.');
+        input.value = result.bib;
+        message.textContent = '✓ ' + result.message;
+        message.style.color = '#16763a';
+      } catch (error) {
+        message.textContent = error.message || 'Error de conexión. Volvé a intentar.';
+        message.style.color = '#b91c1c';
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+})();
+</script>
+}

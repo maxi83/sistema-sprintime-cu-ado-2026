@@ -1,4 +1,48 @@
 @model List<Result>
-@{ var race=(Event)ViewBag.Event; ViewData["Title"]="Resultados · "+race.Name; }
-<section class="page-hero compact result-hero"><div class="shell"><span class="eyebrow">RESULTADO OFICIAL</span><h1>@race.Name</h1><p>@race.StartDate.ToString("dd MMM yyyy") · @race.City</p></div></section>
-<section class="section"><div class="shell"><form class="filter-bar" method="get"><input type="search" name="q" value="@ViewBag.Query" placeholder="Nombre o dorsal"/><select name="categoryId"><option value="">Todas las categorías</option>@foreach(var c in race.Distances.SelectMany(x=>x.Categories)){<option value="@c.Id" selected="@(ViewBag.CategoryId is int id && id==c.Id)">@c.Name</option>}</select><button class="btn btn-dark">Filtrar</button></form><div class="table-shell"><table class="data-table results-table"><thead><tr><th>#</th><th>Dorsal</th><th>Ciclista</th><th>Categoría</th><th>Tiempo</th><th>Cat.</th><th></th></tr></thead><tbody>@foreach(var r in Model){<tr><td><strong>@(r.GeneralPosition?.ToString() ?? "—")</strong></td><td><span class="bib">@(r.Registration.BibNumber??"—")</span></td><td><b>@r.Registration.Cyclist.FirstName @r.Registration.Cyclist.LastName</b><small>@r.Registration.Cyclist.Team</small></td><td>@r.Registration.Category.Name</td><td class="time">@(r.TotalTime?.ToString(@"hh\:mm\:ss") ?? "—")</td><td>#@(r.CategoryPosition?.ToString()??"—")</td><td><a class="table-action" asp-action="Finisher" asp-route-id="@r.Id">Finisher →</a></td></tr>}</tbody></table>@if(Model.Count==0){<div class="table-empty">No hay resultados que coincidan con la búsqueda.</div>}</div></div></section>
+@{ var race=(Event)ViewBag.Event; ViewData["Title"]="Resultados · "+race.Name; var manualPodiums = (List<ManualPodium>?)ViewBag.ManualPodiums ?? new List<ManualPodium>(); }
+<section class="page-hero compact result-hero"><div class="shell"><span class="eyebrow">@(ViewBag.OrganizerPreview == true && Model.Any(x => x.Status != ResultStatus.Official) ? "VISTA PRIVADA · RESULTADOS PROVISIONALES" : "RESULTADOS OFICIALES")</span><h1>@race.Name</h1><p>@race.StartDate.ToString("dd MMM yyyy") · @race.City</p></div></section>
+<section class="section"><div class="shell">@if(ViewBag.OrganizerPreview == true && Model.Any(x => x.Status != ResultStatus.Official)){<div role="status" style="margin-bottom:20px;padding:16px;background:#fff4dc;border-left:4px solid #ef8800;border-radius:8px"><strong>Vista previa para el organizador.</strong> Estos tiempos son provisionales y todavía no están publicados para los ciclistas.</div>}@if (ViewBag.OrganizerPreview == true && Model.Any(x => x.Status != ResultStatus.Official))
+{
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin:0 0 22px;padding:18px;border:1px solid #c8c8c8;border-radius:12px;background:#fff">
+        <div>
+            <strong style="display:block">Publicación de resultados</strong>
+            <small>Esta acción hará visibles los tiempos a los corredores y marcará la carrera como finalizada. Verificá los registros antes de publicar.</small>
+        </div>
+        <form asp-controller="Results" asp-action="Publish" method="post" onsubmit="return confirm('¿Confirmás que revisaste los tiempos y querés publicar los resultados como OFICIALES? Esta acción finaliza la carrera y hace públicos los resultados.');">
+            <input type="hidden" name="eventId" value="@race.Id" />
+            <button type="submit" class="btn btn-primary">Publicar resultados oficiales</button>
+        </form>
+    </div>
+}
+@if(ViewBag.OrganizerPreview == true)
+{
+    <div style="margin:0 0 20px;padding:18px;border:1px solid #bbb;border-radius:12px;background:#fff">
+        <strong style="display:block;margin-bottom:8px">Podios cargados por dorsal</strong>
+        <p>Para las carreras sin chips, cargá manualmente hasta cinco puestos por categoría. Los borradores no son públicos.</p>
+        <a class="btn btn-primary" asp-action="ManualPodiums" asp-route-eventId="@race.Id">Cargar podios por dorsal</a>
+    </div>
+}
+@if(manualPodiums.Count > 0)
+{
+    <section style="margin:24px 0">
+        <h2>Podios por categoría · carga manual</h2>
+        @if(ViewBag.OrganizerPreview == true && manualPodiums.Any(x => !x.IsPublished))
+        {
+            <p><strong>Vista privada:</strong> los puestos en borrador todavía no son públicos.</p>
+        }
+        <div class="table-shell"><table class="data-table results-table">
+            <thead><tr><th>Categoría</th><th>Puesto</th><th>Dorsal</th><th>Ciclista</th><th>Estado</th></tr></thead>
+            <tbody>
+            @foreach(var entry in manualPodiums)
+            {
+                <tr><td>@entry.Category.Name</td><td>#@entry.Place</td>
+                <td><span class="bib">@entry.Registration.BibNumber</span></td>
+                <td>@entry.Registration.Cyclist.FirstName @entry.Registration.Cyclist.LastName</td>
+                <td>@(entry.IsPublished ? "Oficial" : "Borrador")</td></tr>
+            }
+            </tbody>
+        </table></div>
+    </section>
+}
+<h2 style="margin:24px 0 12px">@(Model.Any(x=>x.Status == ResultStatus.Official) ? "Tiempos y clasificación" : "Cronometraje del día de carrera")</h2>
+<form class="filter-bar" method="get"><input type="search" name="q" value="@ViewBag.Query" placeholder="Nombre o dorsal"/><select name="categoryId"><option value="">Todas las categorías</option>@foreach(var c in race.Distances.SelectMany(x=>x.Categories)){<option value="@c.Id" selected="@(ViewBag.CategoryId is int id && id==c.Id)">@c.Name</option>}</select><button class="btn btn-dark">Filtrar</button></form><div class="table-shell"><table class="data-table results-table"><thead><tr><th>#</th><th>Dorsal</th><th>Ciclista</th><th>Categoría</th><th>Tiempo</th><th>Pos. categoría</th><th></th></tr></thead><tbody>@foreach(var r in Model){<tr><td><strong>@(r.GeneralPosition?.ToString() ?? "—")</strong></td><td><span class="bib">@(r.Registration.BibNumber??"—")</span></td><td><b>@r.Registration.Cyclist.FirstName @r.Registration.Cyclist.LastName</b><small>@r.Registration.Cyclist.Team</small></td><td>@r.Registration.Category.Name</td><td class="time">@(r.TotalTime?.ToString(@"hh\:mm\:ss") ?? "—")</td><td>#@(r.CategoryPosition?.ToString()??"—")</td><td><a class="table-action" asp-action="Finisher" asp-route-id="@r.Id">Ver comprobante →</a></td></tr>}</tbody></table>@if(Model.Count==0){<div class="table-empty">@(ViewBag.OrganizerPreview == true ? "Todavía no hay tiempos calculados que coincidan con la búsqueda." : "Todavía no hay resultados oficiales publicados para esta carrera.")</div>}</div></div></section>

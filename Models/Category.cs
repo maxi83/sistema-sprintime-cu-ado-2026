@@ -11,5 +11,6 @@ public class Category
     public int? MinAge { get; set; }
     public int? MaxAge { get; set; }
     [MaxLength(20)] public string Gender { get; set; } = "Mixto";
+    public bool IsSelectableByCyclist { get; set; }
     public List<Registration> Registrations { get; set; } = [];
 }
