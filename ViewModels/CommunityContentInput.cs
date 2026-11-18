@@ -19,7 +19,7 @@ public class CommunitySponsorInput
     public int? Id { get; set; }
     [Required, MaxLength(120)] public string Name { get; set; } = "";
     [MaxLength(600)] public string? Description { get; set; }
-    [Url, MaxLength(500)] public string? LinkUrl { get; set; }
+    [MaxLength(500)] public string? LinkUrl { get; set; }
     public string? LogoUrl { get; set; }
     public IFormFile? LogoFile { get; set; }
     public bool RemoveLogo { get; set; }
