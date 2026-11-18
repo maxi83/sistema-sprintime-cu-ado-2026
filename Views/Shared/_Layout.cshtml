@@ -24,6 +24,8 @@
             <button class="nav-toggle" type="button" data-nav-toggle aria-label="Abrir menú"><span></span><span></span><span></span></button>
             <nav class="main-nav" data-nav>
                 <a asp-controller="Events" asp-action="Index">Carreras</a>
+                <a asp-controller="Community" asp-action="News">Novedades</a>
+                <a asp-controller="Community" asp-action="Sponsors">Auspiciantes</a>
                 <a asp-controller="Results" asp-action="Latest">Últimos resultados</a>
                 @if (social?.RankingEnabled == true) { <a asp-controller="Ranking" asp-action="Index">Ranking</a> }
 
@@ -59,6 +61,8 @@
             <div class="footer-links">
                 <a asp-controller="Events" asp-action="Index">Próximas carreras</a>
                 <a asp-controller="Results" asp-action="Index">Resultados</a>
+                <a asp-controller="Community" asp-action="News">Novedades</a>
+                <a asp-controller="Community" asp-action="Sponsors">Auspiciantes</a>
 
                 <a asp-controller="Account" asp-action="Login">Administración</a>
                 @if (social?.FacebookEnabled == true && !string.IsNullOrWhiteSpace(social.FacebookUrl)) { <a href="@social.FacebookUrl" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><span class="social-mark social-fb" aria-hidden="true">f</span> Facebook</a> }
