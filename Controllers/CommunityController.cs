@@ -113,10 +113,19 @@ public class CommunityController(ApplicationDbContext db, IWebHostEnvironment en
     public async Task<IActionResult> EditSponsor(CommunitySponsorInput input)
     {
         if (string.IsNullOrWhiteSpace(input.Name)) ModelState.AddModelError(nameof(input.Name), "Ingresá el nombre.");
-        if (!string.IsNullOrWhiteSpace(input.LinkUrl) &&
-            (!Uri.TryCreate(input.LinkUrl.Trim(), UriKind.Absolute, out var uri) ||
-             uri.Scheme != Uri.UriSchemeHttps))
-            ModelState.AddModelError(nameof(input.LinkUrl), "El enlace debe comenzar con https://");
+        // Admitir dominios sencillos como neomaxweb.online e Instagram sin prefijo.
+        input.LinkUrl = input.LinkUrl?.Trim();
+        if (!string.IsNullOrWhiteSpace(input.LinkUrl))
+        {
+            if (!input.LinkUrl.Contains("://", StringComparison.Ordinal))
+                input.LinkUrl = "https://" + input.LinkUrl;
+            if (!Uri.TryCreate(input.LinkUrl, UriKind.Absolute, out var uri) ||
+                uri.Scheme != Uri.UriSchemeHttps ||
+                string.IsNullOrWhiteSpace(uri.Host) ||
+                !uri.Host.Contains('.') ||
+                !string.IsNullOrEmpty(uri.UserInfo))
+                ModelState.AddModelError(nameof(input.LinkUrl), "Ingresá un dominio válido, por ejemplo neomaxweb.online.");
+        }
         if (!ValidImage(input.LogoFile)) ModelState.AddModelError(nameof(input.LogoFile), "Elegí una imagen JPG, PNG o WebP de hasta 5 MB.");
         var existingLogo = input.Id.HasValue
             ? await db.CommunitySponsors.Where(x => x.Id == input.Id.Value).Select(x => x.LogoUrl).FirstOrDefaultAsync()
