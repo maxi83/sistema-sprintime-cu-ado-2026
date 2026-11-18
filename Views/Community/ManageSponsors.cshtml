@@ -1,0 +1,13 @@
+@model List<CommunitySponsor>
+@{ ViewData["Title"] = "Administrar auspiciantes"; ViewData["BodyClass"] = "admin-page"; }
+<section class="section"><div class="shell narrow"><a class="back-link" asp-controller="Admin" asp-action="Dashboard">← Panel del organizador</a><div class="section-head"><div><span class="eyebrow">CONTENIDOS</span><h1>Administrar auspiciantes</h1></div><a class="btn btn-primary" asp-action="EditSponsor">+ Nuevo auspiciante</a></div>
+@if (Model.Count == 0) { <p>Todavía no hay auspiciantes registrados.</p> }
+@foreach (var sponsor in Model) {
+<div class="admin-card" style="margin:15px 0;padding:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+@if (!string.IsNullOrWhiteSpace(sponsor.LogoUrl)) { <img src="@sponsor.LogoUrl" alt="Logo" style="width:80px;height:80px;object-fit:contain"/> }
+<div style="flex:1"><small>@(sponsor.IsPublished ? "Visible" : "Oculto") · Orden @sponsor.DisplayOrder</small><h2>@sponsor.Name</h2><p>@sponsor.Description</p></div>
+<a class="btn btn-outline" asp-action="EditSponsor" asp-route-id="@sponsor.Id">Editar</a>
+<form asp-action="DeleteSponsor" method="post" onsubmit="return confirm('¿Eliminar este auspiciante?');"><input type="hidden" name="id" value="@sponsor.Id"/><button class="btn btn-danger" type="submit">Eliminar</button></form>
+</div>
+}
+</div></section>
